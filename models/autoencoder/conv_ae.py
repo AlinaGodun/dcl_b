@@ -28,10 +28,8 @@ def fit(model, trainloader, epochs, start_lr, end_lr, device, loss_fn=None, weig
             optimizer.step()
             i += 1
         if epoch_i % 5 == 0:
-            torch.save(model.state_dict(), 'material/ae_complicated_new.pth')
+            torch.save(model.state_dict(), 'trained_models/pretrained_AE.pth')
             print(f"Epoch {epoch_i+1}/{epochs} - Iteration {i} - Train loss:{loss.item():.4f}, LR: {optimizer.param_groups[0]['lr']}")
-            if (loss.item() < 0.65):
-                break
         if end_lr is not None:
             scheduler.step()
     model

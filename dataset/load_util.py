@@ -37,10 +37,15 @@ def load_cinic10(train_path):
 def load_cifar(train_path):
     cifar = torchvision.datasets.CIFAR10(root=train_path, train=True,
                                          download=False,
-                                         transform = torchvision.transforms.Compose([torchvision.transforms.ToTensor(), torchvision.transforms.Grayscale()]))
-    data = cifar.data
+                                         transform=torchvision.transforms.Compose([torchvision.transforms.ToTensor()]))
+    cifartest = torchvision.datasets.CIFAR10(root='./data', train=False,
+                                             download=False, transform=torchvision.transforms.ToTensor())
+    data = process_cifar_data(cifar.data)
+    testdata = process_cifar_data(cifartest.data)
+    return data, testdata
+
+def process_cifar_data(data):
     data = torch.Tensor(data)
     data = data/255
     data = data.permute(0, 3, 1, 2)
-    # data = data.reshape(-1, data.shape[1] * data.shape[2] * data.shape[3])
     return data
