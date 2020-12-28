@@ -17,7 +17,6 @@ from matplotlib import pyplot as plt
 from torchsummary import summary
 
 # util functions
-
 from main.util import denormalize
 from main.util import plot_images
 from main.util import detect_device

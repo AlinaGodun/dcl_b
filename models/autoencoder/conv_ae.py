@@ -24,8 +24,8 @@ def fit(model, trainloader, epochs, start_lr, device, model_path=None, loss_fn=N
             i += 1
         if epoch_i % 5 == 0 and model_path is not None:
             torch.save(model.state_dict(), model_path)
-            print(f"Epoch {epoch_i+1}/{epochs} - Iteration {i} - Train loss:{loss.item():.4f}, "
-                  "LR: {optimizer.param_groups[0]['lr']}")
+            print(f"Epoch {epoch_i+1}/{epochs} - Iteration {i} - Train loss:{loss.item():.4f},",
+                  f"LR: {optimizer.param_groups[0]['lr']}")
     return model
 
 
