@@ -3,10 +3,8 @@ import torch
 import torch.nn as nn
 
 
-def fit(model, trainloader, epochs, start_lr, end_lr, device, loss_fn=None, weight_decay=1e-5, noise_fn=None):
+def fit(model, trainloader, epochs, start_lr, device, model_path=None, loss_fn=None, weight_decay=1e-5):
     optimizer = torch.optim.Adam(model.parameters(), lr=start_lr, weight_decay=weight_decay)
-    if end_lr is not None:
-        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs, eta_min=end_lr, last_epoch=-1)
     if loss_fn is None:
         loss_fn = torch.nn.MSELoss()
     i = 0
@@ -17,22 +15,18 @@ def fit(model, trainloader, epochs, start_lr, end_lr, device, loss_fn=None, weig
             batch = batch_data.to(device)
             # reset gradients from last iteration
             optimizer.zero_grad()
-            if noise_fn is not None:
-                reconstruction = model(noise_fn(batch))
-            else:
-                reconstruction = model(batch)
+            reconstruction = model(batch)
             loss = loss_fn(reconstruction, batch)
             # calculate gradients and reset the computation graph
             loss.backward()
             # update the internal params (weights, etc.)
             optimizer.step()
             i += 1
-        if epoch_i % 5 == 0:
-            torch.save(model.state_dict(), 'trained_models/pretrained_AE.pth')
-            print(f"Epoch {epoch_i+1}/{epochs} - Iteration {i} - Train loss:{loss.item():.4f}, LR: {optimizer.param_groups[0]['lr']}")
-        if end_lr is not None:
-            scheduler.step()
-    model
+        if epoch_i % 5 == 0 and model_path is not None:
+            torch.save(model.state_dict(), model_path)
+            print(f"Epoch {epoch_i+1}/{epochs} - Iteration {i} - Train loss:{loss.item():.4f}, "
+                  "LR: {optimizer.param_groups[0]['lr']}")
+    return model
 
 
 class ConvBn(nn.Module):
@@ -124,7 +118,7 @@ class Flatten(nn.Module):
 
 
 class ConvAE(nn.Module):
-    def __init__(self, n_channels, n_classes, embd_sz=128):
+    def __init__(self, n_channels, n_classes, embd_sz=128, name="AE"):
         super(ConvAE, self).__init__()
         self.n_channels = n_channels
         self.n_classes = n_classes
@@ -152,6 +146,8 @@ class ConvAE(nn.Module):
 
         self.outc = OutConv(128, n_classes)
 
+        self.name = name
+
     def encode(self,x):
         e = self.inc(x)
         e = self.down1(e)
@@ -174,20 +170,19 @@ class ConvAE(nn.Module):
         d = self.decode(e)
         return d
 
-    def fit(self, trainloader, epochs, start_lr, end_lr, device, loss_fn=None, weight_decay=1e-5, noise_fn=None):
+    def fit(self, trainloader, epochs, start_lr, device, model_path=None, loss_fn=None, weight_decay=1e-5):
         fit(model=self,
             trainloader=trainloader,
             epochs=epochs,
             start_lr=start_lr,
-            end_lr=end_lr,
             device=device,
+            model_path=model_path,
             loss_fn=loss_fn,
-            weight_decay=weight_decay,
-            noise_fn=noise_fn)
+            weight_decay=weight_decay)
 
 
 class ConvAESmall(nn.Module):
-    def __init__(self, n_channels, n_classes, embd_sz=128, kernel_size=3):
+    def __init__(self, n_channels, n_classes, embd_sz=128, kernel_size=3, name="SmallAE"):
         super(ConvAESmall, self).__init__()
         self.n_channels = n_channels
         self.n_classes = n_classes
@@ -211,6 +206,7 @@ class ConvAESmall(nn.Module):
         self.up3 = Up(16, 16 // factor, kernel_size=kernel_size)
 
         self.outc = OutConv(16, n_classes)
+        self.name = name
 
     def encode(self,x):
         e = self.inc(x)
@@ -234,16 +230,15 @@ class ConvAESmall(nn.Module):
         d = self.decode(e)
         return d
 
-    def fit(self, trainloader, epochs, start_lr, end_lr, device, loss_fn=None, weight_decay=1e-5, noise_fn=None):
+    def fit(self, trainloader, epochs, start_lr, device, model_path=None, loss_fn=None, weight_decay=1e-5):
         fit(model=self,
             trainloader=trainloader,
             epochs=epochs,
             start_lr=start_lr,
-            end_lr=end_lr,
             device=device,
+            model_path=model_path,
             loss_fn=loss_fn,
-            weight_decay=weight_decay,
-            noise_fn=noise_fn)
+            weight_decay=weight_decay)
 
 
 
