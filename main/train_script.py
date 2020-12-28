@@ -36,9 +36,6 @@ from models.autoencoder.conv_ae import ConvAE
 def train_model(model, batch_size, learning_rate, epochs, data, data_percent, train, device):
     model.to(device)
 
-    # plot data
-    plot_images(data[0:16])
-
     # paths to save/load models from
     base_path = "trained_models"
     pretrained_model_name = "pretrained_" + model.name
@@ -46,8 +43,8 @@ def train_model(model, batch_size, learning_rate, epochs, data, data_percent, tr
 
     # training
     if train:
-        data_limit = len(data) * data_percent
-        print(f"data_limit {data_limit}")
+        data_limit = int(len(data) * data_percent)
+        print(f"Number of train images: {data_limit}")
 
         trainloader = torch.utils.data.DataLoader(data[:data_limit],
                                                   batch_size=batch_size,
@@ -62,7 +59,7 @@ def train_model(model, batch_size, learning_rate, epochs, data, data_percent, tr
 
     return model
 
-print("Versions")
+print("Versions:")
 print(f"torch: {torch.__version__}")
 print(f"torchvision: {torchvision.__version__}")
 print(f"numpy: {np.__version__}",)
@@ -83,8 +80,13 @@ model = ConvAE(n_channels=3, n_classes=3)
 train = True
 
 # load datasets and create dataloaders
-data, testdata = load_util.load_cifar('./data', download=True)
+data, testdata = load_util.load_cifar('./data')
 data_percent = 0.4
+
+# plot data
+# plot_images(data[0:16])
+
+print('Data loaded...')
 
 model = train_model(model, batch_size, learning_rate, epochs, data, data_percent, train, device)
 

@@ -38,8 +38,10 @@ def load_cifar(train_path, download=False):
     cifar = torchvision.datasets.CIFAR10(root=train_path, train=True,
                                          download=download,
                                          transform=torchvision.transforms.Compose([torchvision.transforms.ToTensor()]))
+
     cifartest = torchvision.datasets.CIFAR10(root='./data', train=False,
                                              download=False, transform=torchvision.transforms.ToTensor())
+
     data = process_cifar_data(cifar.data)
     testdata = process_cifar_data(cifartest.data)
     return data, testdata
