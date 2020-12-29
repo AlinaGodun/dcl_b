@@ -2,7 +2,7 @@ import torch
 import torchvision
 import numpy as np
 import matplotlib
-matplotlib.use("TkAgg")
+# matplotlib.use("TkAgg")
 from matplotlib import pyplot as plt
 from sklearn.metrics import normalized_mutual_info_score
 
