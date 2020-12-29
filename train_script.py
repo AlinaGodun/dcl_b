@@ -13,7 +13,7 @@ from torch.multiprocessing import Pool, Process, set_start_method
 try:
     set_start_method('spawn', force=True)
 except RuntimeError:
-    print("fuck you")
+    print("Could not set start spawn method")
 from sklearn.cluster import KMeans
 from sklearn.metrics import normalized_mutual_info_score
 from sklearn.decomposition import PCA
@@ -85,7 +85,7 @@ if __name__ == '__main__':
     train = True
 
     # load datasets and create dataloaders
-    data, testdata = load_util.load_cifar('./data')
+    data, testdata = load_util.load_cifar('./data', download=True)
     data_percent = 0.4
 
     # plot data

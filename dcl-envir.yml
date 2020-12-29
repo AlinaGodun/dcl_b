@@ -1,0 +1,10 @@
+name: dcl-envir
+dependencies:
+  - python=3.7
+  - torch=1.7.*
+  - torchvision=0.8.*
+  - numpy=1.19.*
+  - scikit-learn=0.24.*
+  - torchsummary
+  - matplotlib
+prefix: /Users/username/anaconda3/envs/env-name
