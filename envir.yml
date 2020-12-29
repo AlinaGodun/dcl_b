@@ -1,0 +1,9 @@
+name: dcl-envir
+dependencies:
+  - python=3.7
+  - pytorch
+  - torchvision
+  - numpy
+  - scikit-learn
+  - matplotlib
+prefix: /home/alina/deep-clustering-loss/dcl_b

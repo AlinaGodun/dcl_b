@@ -9,19 +9,11 @@ import torch
 import torchvision
 import numpy as np
 import sklearn
-from torch.multiprocessing import Pool, Process, set_start_method
-try:
-    set_start_method('spawn', force=True)
-except RuntimeError:
-    print("Could not set start spawn method")
 from sklearn.cluster import KMeans
 from sklearn.metrics import normalized_mutual_info_score
 from sklearn.decomposition import PCA
 import matplotlib
 from matplotlib import pyplot as plt
-
-# multithreading
-from multiprocessing import Process
 
 # util functions
 from main.util import denormalize
@@ -66,44 +58,35 @@ def train_model(model, batch_size, learning_rate, epochs, data, data_percent, tr
 
     return model
 
-if __name__ == '__main__':
-    print("Versions:")
-    print(f"torch: {torch.__version__}")
-    print(f"torchvision: {torchvision.__version__}")
-    print(f"numpy: {np.__version__}",)
-    print(f"scikit-learn: {sklearn.__version__}")
+print("Versions:")
+print(f"torch: {torch.__version__}")
+print(f"torchvision: {torchvision.__version__}")
+print(f"numpy: {np.__version__}",)
+print(f"scikit-learn: {sklearn.__version__}")
 
-    device = detect_device()
-    print("Using device: ", device)
+device = detect_device()
+print("Using device: ", device)
 
-    # specify learning params
-    batch_size = 256
-    learning_rate = 1e-3
-    epochs = 5
+# specify learning params
+batch_size = 256
+learning_rate = 1e-3
+epochs = 5
 
-    # training
-    train = True
+# training
+train = True
 
-    # load datasets and create dataloaders
-    data, testdata = load_util.load_cifar('./data', download=True)
-    data_percent = 0.4
+# load datasets and create dataloaders
+data, testdata = load_util.load_cifar('./data', download=True)
+data_percent = 0.4
 
-    # plot data
-    # plot_images(data[0:16])
+# plot data
+# plot_images(data[0:16])
 
-    print('Data loaded...')
+print('Data loaded...')
 
-    # create model
-    args_list = []
+# create model
+args_list = []
 
-    for i in range(5):
-        model = ConvAE(n_channels=3, n_classes=3, name=f"ConvAE{i}")
-        args = (model, batch_size, learning_rate, epochs, data, data_percent, train, device)
-        args_list.append(args)
-
-    with Pool(processes=5) as pool:
-        models = pool.starmap(train_model, args_list)
-
-    for m in models:
-        print(m.name)
+model = ConvAE(n_channels=3, n_classes=3)
+train_model(model, batch_size, learning_rate, epochs, data, data_percent, train, device)
 
