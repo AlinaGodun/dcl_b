@@ -37,7 +37,7 @@ def train_model(model, batch_size, learning_rate, epochs, data, data_percent, tr
 
     # paths to save/load models from
     base_path = "trained_models"
-    pretrained_model_name = "pretrained_" + model.name
+    pretrained_model_name = f"pretrained_{model.name}.pth"
     pretrained_model_path = os.path.join(base_path, pretrained_model_name)
 
     # training
