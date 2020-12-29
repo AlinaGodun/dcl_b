@@ -102,13 +102,12 @@ if __name__ == '__main__':
 
     args_list = []
 
-    for i in range(2):
+    for i in range(5):
         model = ConvAE(n_channels=3, n_classes=3, name=f"ConvAE{i}")
         args = (model, batch_size, learning_rate, epochs, data, data_percent, train, device)
         args_list.append(args)
 
-    print("____________")
-    with Pool(processes=2) as pool:
+    with Pool(processes=5) as pool:
         models = pool.starmap(train_model, args_list)
 
     for m in models:
