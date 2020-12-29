@@ -68,7 +68,6 @@ def train_model(model, batch_size, learning_rate, epochs, data, data_percent, tr
     return model
 
 if __name__ == '__main__':
-    print("New concurrent")
     print("Versions:")
     print(f"torch: {torch.__version__}")
     print(f"torchvision: {torchvision.__version__}")
@@ -96,10 +95,6 @@ if __name__ == '__main__':
     print('Data loaded...')
 
     # create model
-    # model = ConvAE(n_channels=3, n_classes=3)
-
-    # model = train_model(model, batch_size, learning_rate, epochs, data, data_percent, train, device)
-
     args_list = []
 
     for i in range(5):
@@ -112,18 +107,4 @@ if __name__ == '__main__':
 
     for m in models:
         print(m.name)
-
-    # processes = []
-
-    # for i in range(4):
-    #     model = ConvAE(n_channels=3, n_classes=3, name=f"ConvAE{i}")
-    #     args = (model, batch_size, learning_rate, epochs, data, data_percent, train, device)
-    #     p = Process(target=train_model, args=args)
-    #     p.start()
-    #     processes.append(p)
-
-    # for p in processes:
-    #     p.join()
-
-    # print('ready')
 

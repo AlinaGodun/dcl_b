@@ -8,7 +8,6 @@ def fit(model, trainloader, epochs, start_lr, device, model_path=None, loss_fn=N
     if loss_fn is None:
         loss_fn = torch.nn.MSELoss()
     i = 0
-    print(f"{model.name} training started...")
     for epoch_i in range(epochs):
         for batch_data in trainloader:
             model.train()
