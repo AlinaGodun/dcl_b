@@ -19,7 +19,6 @@ from sklearn.metrics import normalized_mutual_info_score
 from sklearn.decomposition import PCA
 import matplotlib
 from matplotlib import pyplot as plt
-from torchsummary import summary
 
 # multithreading
 from multiprocessing import Process
