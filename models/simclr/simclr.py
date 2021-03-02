@@ -1,6 +1,6 @@
 import torchvision
 from torch import nn
-import cifar_res_net
+import cifar_resnets
 
 
 class SimCLR(nn.Module):
@@ -8,7 +8,8 @@ class SimCLR(nn.Module):
         super().__init__()
 
         self.resnet_models = {
-            'cifar_resnet': cifar_res_net,
+            'cifar_resnet18': cifar_resnets.ResNet18(),
+            'cifar_resnet50': cifar_resnets.ResNet50(),
             'resnet18': torchvision.models.resnet18(),
             'resnet50': torchvision.models.resnet50(),
         }
