@@ -29,6 +29,7 @@ from dataset import load_util
 
 # autoencoder
 from models.autoencoder.conv_ae import ConvAE
+from models.simclr.simclr import SimCLR
 
 
 def train_model(model, batch_size, learning_rate, epochs, data, data_percent, train, device):
@@ -45,7 +46,8 @@ def train_model(model, batch_size, learning_rate, epochs, data, data_percent, tr
         data_limit = int(len(data) * data_percent)
         print(f"Number of train images: {data_limit}")
 
-        trainloader = torch.utils.data.DataLoader(data[:data_limit],
+        # trainloader = torch.utils.data.DataLoader(data[:data_limit],
+        trainloader = torch.utils.data.DataLoader(data,
                                                   batch_size=batch_size,
                                                   shuffle=True,
                                                   drop_last=False)
@@ -68,15 +70,15 @@ device = detect_device()
 print("Using device: ", device)
 
 # specify learning params
-batch_size = 256
+batch_size = 64
 learning_rate = 1e-3
-epochs = 5
+epochs = 150
 
 # training
 train = True
 
 # load datasets and create dataloaders
-data, testdata = load_util.load_cifar('./data', download=True)
+data, testdata = load_util.load_cifar('./data', download=True, for_model='SimCLR')
 data_percent = 0.4
 
 # plot data
@@ -87,6 +89,10 @@ print('Data loaded...')
 # create model
 args_list = []
 
-model = ConvAE(n_channels=3, n_classes=3)
+# model = ConvAE(n_channels=3, n_classes=3)
+# train_model(model, batch_size, learning_rate, epochs, data, data_percent, train, device)
+
+model = SimCLR(resnet_model='resnet18')
+# model = SimCLR()
 train_model(model, batch_size, learning_rate, epochs, data, data_percent, train, device)
 

@@ -22,8 +22,6 @@ def fit(model, trainloader, epochs, start_lr, device, model_path=None, loss_fn=N
             # update the internal params (weights, etc.)
             optimizer.step()
             i += 1
-        print(f"{model.name}: Epoch {epoch_i + 1}/{epochs} - Iteration {i} - Train loss:{loss.item():.4f},",
-              f"LR: {optimizer.param_groups[0]['lr']}")
         if epoch_i % 5 == 0 and model_path is not None:
             print(f"{model.name}: Epoch {epoch_i + 1}/{epochs} - Iteration {i} - Train loss:{loss.item():.4f},",
                   f"LR: {optimizer.param_groups[0]['lr']}")

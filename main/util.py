@@ -23,9 +23,9 @@ def plot_images(images: torch.Tensor, pad: int = 0):
         npimg = img.numpy()
         npimg = np.array(npimg)
         plt.axis('off')
-        plt.imshow(np.transpose(npimg, (1, 2, 0)),
-                   vmin=0, vmax=1)
-
+        # plt.imshow(np.transpose(npimg, (1, 2, 0)),
+        #            vmin=0, vmax=1)
+        plt.imshow(np.transpose(npimg, (1,2,0)), vmin=0, vmax=1)
     imshow(torchvision.utils.make_grid(images, pad_value=255, normalize=False, padding=pad))
     plt.show()
 

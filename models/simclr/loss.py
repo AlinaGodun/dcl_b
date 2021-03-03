@@ -2,8 +2,9 @@ import torch
 import torch.nn as nn
 
 
-class SimpleContrastiveLoss(nn.Module):
+class SimCLRLoss(nn.Module):
     def __init__(self, tau=0.5):
+        super(SimCLRLoss, self).__init__()
         self.tau = tau
 
     def get_sim_matrix(self, x1, x2):
