@@ -16,13 +16,7 @@ import matplotlib
 from matplotlib import pyplot as plt
 
 # util functions
-from main.util import denormalize
-from main.util import plot_images
-from main.util import detect_device
-from main.util import encode_batchwise
-from main.util import decode_batchwise
-from main.util import predict_batchwise
-from main.util import evaluate_batchwise
+from main.util import *
 
 # dataset functions
 from dataset import load_util
@@ -70,11 +64,12 @@ device = detect_device()
 print("Using device: ", device)
 
 # specify learning params
-batch_size = 64
+batch_size = 128
 learning_rate = 1e-3
 epochs = 150
 
 # training
+
 train = True
 
 # load datasets and create dataloaders
@@ -95,4 +90,3 @@ args_list = []
 model = SimCLR(resnet_model='resnet18')
 # model = SimCLR()
 train_model(model, batch_size, learning_rate, epochs, data, data_percent, train, device)
-
