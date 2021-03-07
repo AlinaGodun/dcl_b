@@ -1,17 +1,16 @@
 import torchvision
+import numpy as np
 
 
 class SimCLRTransforms:
-    def __init__(self, to_tensor=True):
-        t = [torchvision.transforms.RandomResizedCrop(32),
+    def __init__(self):
+        self.train_transform = torchvision.transforms.Compose([
+             torchvision.transforms.RandomResizedCrop(32),
              torchvision.transforms.RandomHorizontalFlip(p=0.2),
              torchvision.transforms.RandomApply([torchvision.transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)], p=0.8),
-             torchvision.transforms.RandomGrayscale(p=0.2)]
-
-        if to_tensor:
-            t.append(torchvision.transforms.ToTensor())
-
-        self.train_transform = torchvision.transforms.Compose(t)
+             torchvision.transforms.RandomGrayscale(p=0.2)
+             ])
 
     def __call__(self, x):
-        return self.train_transform(x), self.train_transform(x)
+        xj = torchvision.transforms.ToTensor()(x) if isinstance(x, np.ndarray) else x
+        return self.train_transform(xj), self.train_transform(xj)

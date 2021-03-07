@@ -3,6 +3,7 @@ import torch
 
 from dataset.ImageDataset import ImageDataset
 from models.simclr.transforms import SimCLRTransforms
+from dataset.custom_cifar import CustomCifar
 
 
 def load_mnist():
@@ -44,8 +45,8 @@ def load_cifar(train_path, download=False, for_model=None):
                                          download=download,
                                          transform=model_transforms[for_model])
 
-    cifartest = torchvision.datasets.CIFAR10(root='./data', train=False,
-                                             download=False, transform=torchvision.transforms.ToTensor())
+    cifartest = torchvision.datasets.CIFAR10(root=train_path, train=False,
+                                             download=False, transform=model_transforms[None])
 
     if for_model == 'SimCLR':
         return cifar, cifartest
@@ -53,6 +54,10 @@ def load_cifar(train_path, download=False, for_model=None):
     data = process_cifar_data(cifar.data)
     testdata = process_cifar_data(cifartest.data)
     return data, testdata
+
+
+def load_custom_cifar(train_path, download=False, for_model=None):
+    return CustomCifar(train_path, download=download, for_model=for_model)
 
 
 def process_cifar_data(data):

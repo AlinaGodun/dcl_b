@@ -38,8 +38,9 @@ def train_model(model, batch_size, learning_rate, epochs, data, data_percent, tr
 
     # training
     if train:
-        data_limit = int(len(data) * data_percent)
-        print(f"Number of train images: {data_limit}")
+        # data_limit = int(len(data) * data_percent)
+        # print(f"Number of train images: {data_limit}")
+        print(f"Number of train images: {len(data)}")
 
         # trainloader = torch.utils.data.DataLoader(data[:data_limit],
         trainloader = torch.utils.data.DataLoader(data,
@@ -86,7 +87,8 @@ epochs = args.epochs
 train = True
 
 # load datasets and create dataloaders
-data, testdata = load_util.load_cifar('./data', download=True, for_model='SimCLR')
+# data, testdata = load_util.load_cifar('./data', download=True, for_model='SimCLR')
+data = load_util.load_custom_cifar('./data', download=True, for_model='SimCLR')
 data_percent = 0.4
 
 # plot data

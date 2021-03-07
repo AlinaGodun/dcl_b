@@ -5,7 +5,6 @@ from torch.utils.data import Dataset
 
 
 class ImageDataset(Dataset):
-    """Custom Image Dataset."""
 
     def __init__(self, root_dir, transforms, color):
         """
