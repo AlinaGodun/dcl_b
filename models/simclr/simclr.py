@@ -73,12 +73,15 @@ class SimCLR(nn.Module):
                       f"LR: {optimizer.param_groups[0]['lr']}")
                 torch.save(self.state_dict(), model_path)
 
-        stat = '\n'.join(map(str, epoch_losses))
-        epoch_writer.write(stat)
-        epoch_writer.close()
+                stat = '\n'.join(map(str, epoch_losses))
+                epoch_writer.write(stat)
+                epoch_losses.clear()
 
-        stat = '\n'.join(map(str, iteration_losses))
-        iteration_writer.write(stat)
+                stat = '\n'.join(map(str, iteration_losses))
+                iteration_writer.write(stat)
+                iteration_losses.clear()
+
+        epoch_writer.close()
         iteration_writer.close()
 
         return self
