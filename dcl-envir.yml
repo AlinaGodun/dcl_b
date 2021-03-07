@@ -7,4 +7,10 @@ dependencies:
   - scikit-learn=0.24.*
   - torchsummary
   - matplotlib
+  - pip:
+    - torch=1.7.*
+    - torchvision=0.8.*
+    - numpy=1.19.*
+    - torchsummary
+    
 prefix: /Users/username/anaconda3/envs/env-name
