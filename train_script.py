@@ -5,6 +5,7 @@ import os
 from collections import Counter, OrderedDict
 
 # external packages
+import argparse
 import torch
 import torchvision
 import numpy as np
@@ -54,6 +55,18 @@ def train_model(model, batch_size, learning_rate, epochs, data, data_percent, tr
 
     return model
 
+
+parser = argparse.ArgumentParser(description='train_script')
+parser.add_argument('--batch_size', type=int, default=128,
+                    help='batch size')
+parser.add_argument('--lr', type=float, default=1e-3,
+                    help='learning rate')
+parser.add_argument('--epochs', type=int, default=100,
+                    help='number of epochs')
+parser.add_argument('--data_persent', type=float, default=0.4,
+                    help='percent of data images to be used for training')
+args = parser.parse_args()
+
 print("Versions:")
 print(f"torch: {torch.__version__}")
 print(f"torchvision: {torchvision.__version__}")
@@ -64,9 +77,9 @@ device = detect_device()
 print("Using device: ", device)
 
 # specify learning params
-batch_size = 128
-learning_rate = 1e-3
-epochs = 150
+batch_size = args.batch_size
+learning_rate = args.lr
+epochs = args.epochs
 
 # training
 
