@@ -64,7 +64,7 @@ parser.add_argument('--lr', type=float, default=1e-3,
                     help='learning rate')
 parser.add_argument('--epochs', type=int, default=100,
                     help='number of epochs')
-parser.add_argument('--data_persent', type=float, default=0.4,
+parser.add_argument('--data_percent', type=float, default=0.4,
                     help='percent of data images to be used for training')
 args = parser.parse_args()
 

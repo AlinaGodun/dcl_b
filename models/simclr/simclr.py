@@ -42,6 +42,12 @@ class SimCLR(nn.Module):
         optimizer = torch.optim.Adam(self.parameters(), lr=start_lr, weight_decay=weight_decay)
         simclr_loss = SimCLRLoss(tau)
         i = 0
+
+        epoch_writer = open("epoch_stat.csv", "w")
+        iteration_writer = open("iteration_stat.csv", "w")
+
+        epoch_losses = []
+        iteration_losses = []
         for epoch in range(epochs):
             for step, ((x_i, x_j), _) in enumerate(trainloader):
                 i += 1
@@ -58,9 +64,22 @@ class SimCLR(nn.Module):
                 loss.backward()
                 optimizer.step()
 
+                iteration_losses.append(f'{epoch}, {i}, {loss.item():.4f}')
+
+            epoch_losses.append(f'{epoch}, {i}, {loss.item():.4f}')
+
             if epoch % 5 == 0 and model_path is not None:
                 print(f"{self.name}: Epoch {epoch + 1}/{epochs} - Iteration {i} - Train loss:{loss.item():.4f},",
                       f"LR: {optimizer.param_groups[0]['lr']}")
                 torch.save(self.state_dict(), model_path)
+
+        stat = '\n'.join(map(str, epoch_losses))
+        epoch_writer.write(stat)
+        epoch_writer.close()
+
+        stat = '\n'.join(map(str, iteration_losses))
+        iteration_writer.write(stat)
+        iteration_writer.close()
+
         return self
 
