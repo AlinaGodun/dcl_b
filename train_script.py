@@ -103,5 +103,7 @@ args_list = []
 # train_model(model, batch_size, learning_rate, epochs, data, data_percent, train, device)
 
 model = SimCLR(resnet_model='resnet18')
+state_dict = torch.load('trained_models/pretrained_SimCLR_100.pth', map_location='cpu')
+model.load_state_dict(state_dict)
 # model = SimCLR()
 train_model(model, batch_size, learning_rate, epochs, data, data_percent, train, device)
