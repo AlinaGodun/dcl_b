@@ -88,8 +88,8 @@ train = True
 
 # load datasets and create dataloaders
 # data, testdata = load_util.load_cifar('./data', download=True, for_model='SimCLR')
-data = load_util.load_custom_cifar('./data', download=True, for_model='SimCLR')
-data_percent = 0.4
+data_percent = args.data_percent
+data = load_util.load_custom_cifar('./data', download=True, for_model='SimCLR', data_percent=data_percent)
 
 # plot data
 # plot_images(data[0:16])

@@ -56,8 +56,8 @@ def load_cifar(train_path, download=False, for_model=None):
     return data, testdata
 
 
-def load_custom_cifar(train_path, download=False, for_model=None):
-    return CustomCifar(train_path, download=download, for_model=for_model)
+def load_custom_cifar(train_path, download=False, for_model=None, train=True, data_percent=1):
+    return CustomCifar(train_path, download=download, for_model=for_model, train=train, data_percent=data_percent)
 
 
 def process_cifar_data(data):

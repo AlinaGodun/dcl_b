@@ -5,13 +5,14 @@ from models.simclr.transforms import SimCLRTransforms
 
 
 class CustomCifar(Dataset):
-    def __init__(self, train_path, download=False, for_model=None, data_percent=0.4):
+    def __init__(self, train_path, download=False, for_model=None, data_percent=0.4, train=True):
         model_transforms = {
             'SimCLR': SimCLRTransforms(),
+            'Test': torchvision.transforms.Compose([torchvision.transforms.ToTensor()]),
             None: torchvision.transforms.Compose([torchvision.transforms.ToTensor()])
         }
 
-        cifar = torchvision.datasets.CIFAR10(root=train_path, train=True,
+        cifar = torchvision.datasets.CIFAR10(root=train_path, train=train,
                                              download=download,
                                              transform=model_transforms[for_model])
 
@@ -20,7 +21,7 @@ class CustomCifar(Dataset):
         self.classes = cifar.classes
         self.image_num = int(len(cifar.data) * data_percent)
         self.class_image_num = int(self.image_num / len(self.classes))
-        self.transforms = model_transforms[for_model]
+        self.transforms = model_transforms['Test'] if not train else model_transforms[for_model]
         self.data = {}
 
         for i in range(10):
@@ -33,4 +34,8 @@ class CustomCifar(Dataset):
     def __getitem__(self, idx):
         class_id = idx // self.class_image_num
         img_id = idx - class_id * self.class_image_num
-        return self.transforms(self.data[class_id][img_id]), self.classes[class_id]
+        return self.transforms(self.data[class_id][img_id]), class_id
+
+    def get_class(self, idx):
+        class_id = idx // self.class_image_num
+        return self.classes[class_id]
