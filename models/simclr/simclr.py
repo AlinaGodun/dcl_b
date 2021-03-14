@@ -3,7 +3,7 @@ import torchvision
 from torch import nn
 from models.simclr.cifar_resnets import ResNet18, ResNet50
 from models.simclr.loss import SimCLRLoss
-
+from util.gradflow_check import plot_grad_flow
 
 class SimCLR(nn.Module):
     def __init__(self, output_dim=128, resnet_model='cifar_resnet18'):
@@ -38,13 +38,13 @@ class SimCLR(nn.Module):
         mapped_feats = self.projection_head(feats)
         return feats, mapped_feats
 
-    def fit(self, trainloader, epochs, start_lr, device, model_path=None, weight_decay=1e-6, tau=0.5):
+    def fit(self, trainloader, epochs, start_lr, device, model_path=None, weight_decay=1e-6, tau=0.5, with_gf=False):
         optimizer = torch.optim.Adam(self.parameters(), lr=start_lr, weight_decay=weight_decay)
         simclr_loss = SimCLRLoss(tau)
         i = 0
 
-        epoch_writer = open("epoch_stat.csv", "w")
-        iteration_writer = open("iteration_stat.csv", "w")
+        # epoch_writer = open("epoch_stat.csv", "w")
+        # iteration_writer = open("iteration_stat.csv", "w")
 
         epoch_losses = []
         iteration_losses = []
@@ -62,9 +62,15 @@ class SimCLR(nn.Module):
                 loss = simclr_loss(mapped_feats_i, mapped_feats_j)
 
                 loss.backward()
+                if with_gf:
+                    plot_grad_flow(self.named_parameters())
+
                 optimizer.step()
 
                 iteration_losses.append(f'{epoch}, {i}, {loss.item():.4f}')
+
+                # if (it_limit):
+                #     break
 
             epoch_losses.append(f'{epoch}, {i}, {loss.item():.4f}')
 
@@ -74,15 +80,14 @@ class SimCLR(nn.Module):
                 torch.save(self.state_dict(), model_path)
 
                 stat = '\n'.join(map(str, epoch_losses))
-                epoch_writer.write(stat)
+                # epoch_writer.write(stat)
                 epoch_losses.clear()
 
                 stat = '\n'.join(map(str, iteration_losses))
-                iteration_writer.write(stat)
+                # iteration_writer.write(stat)
                 iteration_losses.clear()
 
-        epoch_writer.close()
-        iteration_writer.close()
+        # epoch_writer.close()
+        # iteration_writer.close()
 
         return self
-
