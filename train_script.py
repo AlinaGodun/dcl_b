@@ -17,7 +17,7 @@ import matplotlib
 from matplotlib import pyplot as plt
 
 # util functions
-from main.util import *
+from util.util import *
 
 # dataset functions
 from dataset import load_util
