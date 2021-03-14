@@ -3,7 +3,8 @@ import numpy as np
 
 
 class SimCLRTransforms:
-    def __init__(self):
+    def __init__(self, with_original=False):
+        self.with_original = with_original
         self.train_transform = torchvision.transforms.Compose([
              torchvision.transforms.RandomResizedCrop(32),
              torchvision.transforms.RandomHorizontalFlip(p=0.2),
@@ -13,4 +14,7 @@ class SimCLRTransforms:
 
     def __call__(self, x):
         xj = torchvision.transforms.ToTensor()(x) if isinstance(x, np.ndarray) else x
-        return self.train_transform(xj), self.train_transform(xj)
+        t = [self.train_transform(xj), self.train_transform(xj)]
+        if self.with_original:
+            t.insert(0, xj)
+        return tuple(t)
