@@ -24,7 +24,7 @@ class CustomCifar(Dataset):
         self.transforms = model_transforms['Test'] if not train else model_transforms[for_model]
         self.data = {}
 
-        for i in range(10):
+        for i in range(len(self.classes)):
             i_mask = targets == i
             self.data[i] = cifar.data[i_mask][:self.class_image_num]
 

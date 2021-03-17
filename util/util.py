@@ -19,7 +19,7 @@ def denormalize(tensor: torch.Tensor, mean: float = 0.1307, std: float = 0.3081)
 def plot_images(images: torch.Tensor, pad: int = 0, nrow: int=8):
     """Aligns multiple images on an N by 8 grid"""
     def imshow(img):
-        plt.figure(figsize=(10, 20))
+        plt.figure(figsize=(10, 22))
         npimg = img.numpy()
         npimg = np.array(npimg)
         plt.axis('off')
