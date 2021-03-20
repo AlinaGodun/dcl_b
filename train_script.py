@@ -46,7 +46,7 @@ def train_model(model, batch_size, learning_rate, epochs, data, data_percent, tr
         trainloader = torch.utils.data.DataLoader(data,
                                                   batch_size=batch_size,
                                                   shuffle=True,
-                                                  drop_last=False)
+                                                  drop_last=True)
 
         model = model.fit(trainloader=trainloader, epochs=epochs, start_lr=learning_rate, device=device, model_path=pretrained_model_path)
         torch.save(model.state_dict(), pretrained_model_path)
@@ -102,8 +102,8 @@ args_list = []
 # model = ConvAE(n_channels=3, n_classes=3)
 # train_model(model, batch_size, learning_rate, epochs, data, data_percent, train, device)
 
-model = SimCLR(resnet_model='resnet18')
-state_dict = torch.load('trained_models/pretrained_SimCLR_100.pth', map_location='cpu')
-model.load_state_dict(state_dict)
-# model = SimCLR()
+# model = SimCLR(resnet_model='resnet18')
+# state_dict = torch.load('trained_models/pretrained_SimCLR_100.pth', map_location='cpu')
+# model.load_state_dict(state_dict)
+model = SimCLR(resnet_model='resnet50')
 train_model(model, batch_size, learning_rate, epochs, data, data_percent, train, device)

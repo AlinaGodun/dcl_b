@@ -43,8 +43,8 @@ class SimCLR(nn.Module):
         simclr_loss = SimCLRLoss(tau)
         i = 0
 
-        # epoch_writer = open("epoch_stat.csv", "w")
-        # iteration_writer = open("iteration_stat.csv", "w")
+        epoch_writer = open("epoch_stat.csv", "w")
+        iteration_writer = open("iteration_stat.csv", "w")
 
         epoch_losses = []
         iteration_losses = []
@@ -69,9 +69,6 @@ class SimCLR(nn.Module):
 
                 iteration_losses.append(f'{epoch}, {i}, {loss.item():.4f}')
 
-                # if (it_limit):
-                #     break
-
             epoch_losses.append(f'{epoch}, {i}, {loss.item():.4f}')
 
             if epoch % 5 == 0 and model_path is not None:
@@ -80,14 +77,14 @@ class SimCLR(nn.Module):
                 torch.save(self.state_dict(), model_path)
 
                 stat = '\n'.join(map(str, epoch_losses))
-                # epoch_writer.write(stat)
+                epoch_writer.write(stat)
                 epoch_losses.clear()
 
                 stat = '\n'.join(map(str, iteration_losses))
-                # iteration_writer.write(stat)
+                iteration_writer.write(stat)
                 iteration_losses.clear()
 
-        # epoch_writer.close()
-        # iteration_writer.close()
+        epoch_writer.close()
+        iteration_writer.close()
 
         return self
