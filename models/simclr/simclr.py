@@ -46,8 +46,9 @@ class SimCLR(nn.Module):
         epoch_writer = open("epoch_stat.csv", "w")
         iteration_writer = open("iteration_stat.csv", "w")
 
-        epoch_losses = []
-        iteration_losses = []
+        epoch_losses = ['epoch,iteration,loss']
+        iteration_losses = ['epoch,iteration,loss']
+
         for epoch in range(epochs):
             for step, ((x_i, x_j), _) in enumerate(trainloader):
                 i += 1
@@ -67,9 +68,9 @@ class SimCLR(nn.Module):
 
                 optimizer.step()
 
-                iteration_losses.append(f'{epoch}, {i}, {loss.item():.4f}')
+                iteration_losses.append(f'{epoch},{i},{loss.item():.4f}')
 
-            epoch_losses.append(f'{epoch}, {i}, {loss.item():.4f}')
+            epoch_losses.append(f'{epoch},{i},{loss.item():.4f}')
 
             if epoch % 5 == 0 and model_path is not None:
                 print(f"{self.name}: Epoch {epoch + 1}/{epochs} - Iteration {i} - Train loss:{loss.item():.4f},",
