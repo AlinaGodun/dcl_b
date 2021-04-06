@@ -2,6 +2,6 @@
 /data/
 /.idea/
 /trained_models/
-/.ipynb_checkpoints/
+*.ipynb_checkpoints*
 *.pyc
 *.pyo
