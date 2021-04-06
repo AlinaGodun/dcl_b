@@ -17,6 +17,8 @@ import matplotlib
 from matplotlib import pyplot as plt
 
 # util functions
+from models.dec.IDEC import IDEC
+from models.simclr.loss import SimCLRLoss
 from util.util import *
 
 # dataset functions
@@ -27,7 +29,7 @@ from models.autoencoder.conv_ae import ConvAE
 from models.simclr.simclr import SimCLR
 
 
-def train_model(model, batch_size, learning_rate, epochs, data, data_percent, train, device):
+def train_model(model, batch_size, learning_rate, epochs, data, train, device):
     print(f"Training {model.name} started...")
     model.to(device)
 
@@ -57,6 +59,13 @@ def train_model(model, batch_size, learning_rate, epochs, data, data_percent, tr
     return model
 
 
+def perform_experiments(resnet_model='resnet18', epochs=20, learning_rates = [0.5, 1.0, 1.5]):
+    for learning_rate in learning_rates:
+        model = SimCLR(resnet_model=resnet_model)
+        model.name = f'{model.name}_LR{learning_rate}_e{epochs}'
+        train_model(model, batch_size, learning_rate, epochs, data, data_percent, train, device)
+
+
 parser = argparse.ArgumentParser(description='train_script')
 parser.add_argument('--batch_size', type=int, default=128,
                     help='batch size')
@@ -66,6 +75,8 @@ parser.add_argument('--epochs', type=int, default=100,
                     help='number of epochs')
 parser.add_argument('--data_percent', type=float, default=0.4,
                     help='percent of data images to be used for training')
+parser.add_argument('--resnet', type=str, default='resnet18',
+                    help='default model used for SimCLR base')
 args = parser.parse_args()
 
 print("Versions:")
@@ -89,7 +100,13 @@ train = True
 # load datasets and create dataloaders
 # data, testdata = load_util.load_cifar('./data', download=True, for_model='SimCLR')
 data_percent = args.data_percent
-data = load_util.load_custom_cifar('./data', download=True, for_model='SimCLR', data_percent=data_percent)
+data = load_util.load_custom_cifar('./data', download=False, data_percent=data_percent, for_model='SimCLR')
+
+cluster_data = load_util.load_custom_cifar('./data', download=False, data_percent=data_percent)
+cluster_trainloader = torch.utils.data.DataLoader(cluster_data,
+                                          batch_size=batch_size,
+                                          shuffle=True,
+                                          drop_last=True)
 
 # plot data
 # plot_images(data[0:16])
@@ -102,8 +119,21 @@ args_list = []
 # model = ConvAE(n_channels=3, n_classes=3)
 # train_model(model, batch_size, learning_rate, epochs, data, data_percent, train, device)
 
+
+resnet_model = args.resnet
 model = SimCLR(resnet_model='resnet50')
-state_dict = torch.load('trained_models/pretrained_SimCLR.pth', map_location='cpu')
+state_dict = torch.load('trained_models/pretrained_SimCLR.pth', map_location=device)
 model.load_state_dict(state_dict)
-# model = SimCLR(resnet_model='resnet50')
-train_model(model, batch_size, learning_rate, epochs, data, data_percent, train, device)
+model.to(device)
+
+loss = SimCLRLoss()
+
+embedded_data, labels = model.encode_batchwise(cluster_trainloader, device)
+n_clusters = len(set(labels))
+kmeans = KMeans(n_clusters=n_clusters)
+kmeans.fit(embedded_data)
+nmi = normalized_mutual_info_score(labels, kmeans.labels_)
+print(f"NMI: {nmi:.4f}")
+
+idec_simclr = IDEC(model, loss, kmeans.cluster_centers_, device)
+train_model(idec_simclr, batch_size, learning_rate, epochs, data, train, device)

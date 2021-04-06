@@ -43,8 +43,8 @@ class SimCLR(nn.Module):
         simclr_loss = SimCLRLoss(tau)
         i = 0
 
-        epoch_writer = open("epoch_stat.csv", "w")
-        iteration_writer = open("iteration_stat.csv", "w")
+        epoch_writer = open(f"epoch_stat_{self.name}.csv", "w")
+        iteration_writer = open(f"iteration_stat_{self.name}.csv", "w")
 
         epoch_losses = ['epoch,iteration,loss']
         iteration_losses = ['epoch,iteration,loss']
@@ -89,3 +89,15 @@ class SimCLR(nn.Module):
         iteration_writer.close()
 
         return self
+
+    def encode_batchwise(self, dataloader, device):
+        """ Utility function for embedding the whole data set in a mini-batch fashion
+        """
+        embeddings = []
+        labels = []
+        for batch, blabels in dataloader:
+            batch_data = batch.to(device)
+            vec, proj = self(batch_data)
+            embeddings.append(vec.detach().cpu())
+            labels = labels + blabels.tolist()
+        return torch.cat(embeddings, dim=0).numpy(), labels
