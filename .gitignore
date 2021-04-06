@@ -1,0 +1,7 @@
+/venv/
+/data/
+/.idea/
+/trained_models/
+/.ipynb_checkpoints/
+*.pyc
+*.pyo
