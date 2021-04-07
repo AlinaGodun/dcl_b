@@ -3,7 +3,7 @@ from models.simclr.simclr import *
 import torch
 
 class IDEC(torch.nn.Module):
-    def __init__(self, model, loss, cluster_centers, device):
+    def __init__(self, model=SimCLR(resnet_model='resnet18'), loss=None, cluster_centers=torch.rand(size=(10, 512)), device='cpu'):
         super().__init__()
         self.model = model
         self.name = f'IDEC_{model.name}'
@@ -12,13 +12,6 @@ class IDEC(torch.nn.Module):
 
         ## set resnet in simclr to eval mode
         self.model.base_encoder.eval()
-
-    def __init__(self):
-        super().__init__()
-        self.model = SimCLR(resnet_model='resnet18')
-        self.name = f'IDEC_{self.model.name}'
-        self.loss = None
-        self.cluster_module = DEC(torch.rand(size=(10, 512)))
 
 
     def fit(self, trainloader, epochs, start_lr, device, model_path=None, degree_of_space_distortion=0.1, idec_factor=0.1, weight_decay=1e-6):
