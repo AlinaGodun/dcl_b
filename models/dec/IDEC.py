@@ -1,4 +1,5 @@
 from models.dec.DEC import DEC
+from models.simclr.simclr import *
 import torch
 
 class IDEC(torch.nn.Module):
@@ -8,6 +9,16 @@ class IDEC(torch.nn.Module):
         self.name = f'IDEC_{model.name}'
         self.loss = loss
         self.cluster_module = DEC(cluster_centers).to(device)
+
+        ## set resnet in simclr to eval mode
+        self.model.base_encoder.eval()
+
+    def __init__(self):
+        super().__init__()
+        self.model = SimCLR(resnet_model='resnet18')
+        self.name = f'IDEC_{self.model.name}'
+        self.loss = None
+        self.cluster_module = DEC(torch.rand(size=(10, 512)))
 
 
     def fit(self, trainloader, epochs, start_lr, device, model_path=None, degree_of_space_distortion=0.1, idec_factor=0.1, weight_decay=1e-6):

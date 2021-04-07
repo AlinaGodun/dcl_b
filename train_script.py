@@ -121,7 +121,7 @@ args_list = []
 
 
 resnet_model = args.resnet
-model = SimCLR(resnet_model='resnet50')
+model = SimCLR(resnet_model='resnet18')
 state_dict = torch.load('trained_models/pretrained_SimCLR.pth', map_location=device)
 model.load_state_dict(state_dict)
 model.to(device)
