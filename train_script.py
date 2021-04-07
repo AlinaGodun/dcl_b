@@ -125,9 +125,9 @@ args_list = []
 # state_dict = torch.load('trained_models/pretrained_SimCLR.pth', map_location=device)
 # model.load_state_dict(state_dict)
 # model.to(device)
-#
-# loss = SimCLRLoss()
-#
+
+loss = SimCLRLoss()
+
 # embedded_data, labels = model.encode_batchwise(cluster_trainloader, device)
 # n_clusters = len(set(labels))
 # kmeans = KMeans(n_clusters=n_clusters)
@@ -138,9 +138,9 @@ args_list = []
 # idec_simclr = IDEC(model, loss, kmeans.cluster_centers_, device)
 # train_model(idec_simclr, batch_size, learning_rate, epochs, data, train, device)
 
-idec_simclr = IDEC()
+idec_simclr = IDEC(loss=loss, device=device)
 
-state_dict = torch.load(f'trained_models/IDEC_SimCLR_r18_e100.pth', map_location='cpu')
+state_dict = torch.load(f'trained_models/pretrained_IDEC_SimCLR.pth', map_location='cpu')
 idec_simclr.load_state_dict(state_dict)
 idec_simclr.to(device)
 train_model(idec_simclr, batch_size, learning_rate, epochs, data, train, device)
