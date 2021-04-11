@@ -3,7 +3,7 @@ import torch
 
 from dataset.ImageDataset import ImageDataset
 from models.simclr.transforms import SimCLRTransforms
-from dataset.custom_cifar import CustomCifar
+from models.simclr.custom_cifar import CustomCifar
 
 
 def load_mnist():

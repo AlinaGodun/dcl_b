@@ -13,8 +13,7 @@ class RotNetTransforms:
     def __call__(self, x):
         rotated_xs = [self.train_transform(r(x)) for _, r in self.rotate.items()]
         rotated_labels = [label for label, _ in self.rotate.items()]
-        print(rotated_labels)
-        return torch.stack(rotated_xs, dim=0), rotated_labels
+        return rotated_xs, rotated_labels
 
 
 def rotate_0(x):
