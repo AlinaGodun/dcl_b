@@ -9,6 +9,7 @@ class SimCLR(nn.Module):
     def __init__(self, output_dim=128, resnet_model='cifar_resnet18'):
         super().__init__()
         self.name = 'SimCLR'
+        # TODO: move it outside of the init
         self.resnet_models = {
             'cifar_resnet18': ResNet18(),
             'cifar_resnet50': ResNet50(),
