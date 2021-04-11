@@ -120,20 +120,27 @@ args_list = []
 # train_model(model, batch_size, learning_rate, epochs, data, data_percent, train, device)
 
 
-resnet_model = args.resnet
-model = SimCLR(resnet_model='resnet50')
-state_dict = torch.load('trained_models/pretrained_SimCLR.pth', map_location=device)
-model.load_state_dict(state_dict)
-model.to(device)
+# resnet_model = args.resnet
+# model = SimCLR(resnet_model='resnet18')
+# state_dict = torch.load('trained_models/pretrained_SimCLR.pth', map_location=device)
+# model.load_state_dict(state_dict)
+# model.to(device)
 
 loss = SimCLRLoss()
 
-embedded_data, labels = model.encode_batchwise(cluster_trainloader, device)
-n_clusters = len(set(labels))
-kmeans = KMeans(n_clusters=n_clusters)
-kmeans.fit(embedded_data)
-nmi = normalized_mutual_info_score(labels, kmeans.labels_)
-print(f"NMI: {nmi:.4f}")
+# embedded_data, labels = model.encode_batchwise(cluster_trainloader, device)
+# n_clusters = len(set(labels))
+# kmeans = KMeans(n_clusters=n_clusters)
+# kmeans.fit(embedded_data)
+# nmi = normalized_mutual_info_score(labels, kmeans.labels_)
+# print(f"NMI: {nmi:.4f}")
 
-idec_simclr = IDEC(model, loss, kmeans.cluster_centers_, device)
+# idec_simclr = IDEC(model, loss, kmeans.cluster_centers_, device)
+# train_model(idec_simclr, batch_size, learning_rate, epochs, data, train, device)
+
+idec_simclr = IDEC(loss=loss, device=device)
+
+state_dict = torch.load(f'trained_models/pretrained_IDEC_SimCLR.pth', map_location='cpu')
+idec_simclr.load_state_dict(state_dict)
+idec_simclr.to(device)
 train_model(idec_simclr, batch_size, learning_rate, epochs, data, train, device)
