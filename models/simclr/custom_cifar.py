@@ -27,7 +27,7 @@ class CustomCifar(Dataset):
 
         for i in range(len(self.classes)):
             i_mask = targets == i
-            self.data[i] = cifar.data[i_mask][:self.class_image_num]
+            self.data[i] = np.array(cifar.data[i_mask][:self.class_image_num])
 
     def __len__(self):
         return self.image_num
