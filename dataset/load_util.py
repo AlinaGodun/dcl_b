@@ -3,8 +3,8 @@ import torch
 
 from dataset.ImageDataset import ImageDataset
 from models.simclr.transforms import SimCLRTransforms
-from models.simclr.custom_cifar import CustomCifar
-
+from models.simclr.custom_cifar import CustomCifar as SimCLRCustomCifar
+from models.rotnet.custom_cifar import CustomCifar as RotNetCustomCifar
 
 def load_mnist():
     # setup normalization function
@@ -57,8 +57,10 @@ def load_cifar(train_path, download=False, for_model=None):
 
 
 def load_custom_cifar(train_path, download=False, for_model=None, train=True, data_percent=1):
-    return CustomCifar(train_path, download=download, for_model=for_model, train=train, data_percent=data_percent)
-
+    if for_model == 'SimCLR':
+        return SimCLRCustomCifar(train_path, download=download, for_model=for_model, train=train, data_percent=data_percent)
+    else:
+        return RotNetCustomCifar(train_path, download=download, train=train, data_percent=data_percent)
 
 def process_cifar_data(data):
     data = torch.Tensor(data)
