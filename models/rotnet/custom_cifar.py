@@ -10,6 +10,7 @@ class CustomCifar(Dataset):
 
         cifar = torchvision.datasets.CIFAR10(root=train_path, train=train, download=download)
 
+        self.classes = cifar.classes
         self.rotation_num = 4
         self.rotation_image_num = int(len(cifar.data) * data_percent) * self.rotation_num
         self.rotation_class_image_num = int(self.rotation_image_num / self.rotation_num)
@@ -19,9 +20,9 @@ class CustomCifar(Dataset):
 
         rotated_data_list = []
         targets = np.array(cifar.targets)
-        class_image_num = int(self.rotation_class_image_num / len(cifar.classes))
+        class_image_num = int(self.rotation_class_image_num / len(self.classes))
 
-        for i in range(len(cifar.classes)):
+        for i in range(len(self.classes)):
             i_mask = targets == i
             data = cifar.data[i_mask][:class_image_num]
 
