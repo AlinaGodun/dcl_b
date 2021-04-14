@@ -77,7 +77,7 @@ class RotNet(nn.Module):
 
     def fit(self, trainloader, epochs, start_lr, device, model_path=None, weight_decay=5e-4, with_gf=False):
         optimizer = torch.optim.SGD(self.parameters(), lr=start_lr, momentum=0.9, nesterov=True, weight_decay=weight_decay)
-        scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[30, 60, 80], gamma=0.2)
+        scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[20, 40, 45], gamma=0.2)
         rotnet_loss = nn.CrossEntropyLoss()
         i = 0
 
