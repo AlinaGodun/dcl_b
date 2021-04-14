@@ -40,8 +40,6 @@ class IDEC(torch.nn.Module):
                 loss = base_loss + degree_of_space_distortion * cluster_loss
 
                 loss.backward()
-                if with_gf:
-                    plot_grad_flow(self.named_parameters())
 
                 optimizer.step()
 
