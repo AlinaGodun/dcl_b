@@ -10,13 +10,10 @@ class IDEC(torch.nn.Module):
         self.loss = loss
         self.cluster_module = DEC(cluster_centers).to(device)
 
-        ## set resnet in simclr to eval mode
-        self.model.base_encoder.eval()
-
-
-    def fit(self, trainloader, epochs, start_lr, device, model_path=None, degree_of_space_distortion=0.1, idec_factor=0.1, weight_decay=1e-6):
+    def fit(self, trainloader, epochs, start_lr, device, model_path=None, weight_decay=5e-4, with_gf=False, degree_of_space_distortion=0.1, idec_factor=0.1):
         lr = start_lr * idec_factor
-        optimizer = torch.optim.Adam(self.parameters(), lr=lr, weight_decay=weight_decay)
+        optimizer = torch.optim.SGD(self.parameters(), lr=lr, momentum=0.9, nesterov=True, weight_decay=weight_decay)
+        rotnet_loss = nn.CrossEntropyLoss()
         i = 0
 
         epoch_writer = open(f"epoch_stat_{self.name}.csv", "w")
@@ -26,24 +23,27 @@ class IDEC(torch.nn.Module):
         iteration_losses = ['epoch,iteration,loss']
 
         for epoch in range(epochs):
-            for step, ((x, x_i, x_j), _) in enumerate(trainloader):
+            for step, (x, labels) in enumerate(trainloader):
                 i += 1
                 x = x.to(device)
-                x_i = x_i.to(device)
-                x_j = x_j.to(device)
+                labels = labels.to(device)
 
                 optimizer.zero_grad()
 
-                _, mapped_feats_i = self.model(x_i)
-                _, mapped_feats_j = self.model(x_j)
-                feats, _ = self.model(x)
+                # print(x.shape)
+                classifier_feats = self.model(x)
+                feats = self.model(x, ['conv2']).flatten(start_dim=1)
+                print(feats.shape)
 
-                base_loss = self.loss(mapped_feats_i, mapped_feats_j)
+                # print(feats.shape)
+                base_loss = rotnet_loss(classifier_feats, labels)
                 cluster_loss = self.cluster_module.loss_dec_compression(feats)
                 loss = base_loss + degree_of_space_distortion * cluster_loss
 
-                optimizer.zero_grad()
                 loss.backward()
+                if with_gf:
+                    plot_grad_flow(self.named_parameters())
+
                 optimizer.step()
 
                 iteration_losses.append(f'{epoch},{i},{loss.item():.4f}')
@@ -56,11 +56,11 @@ class IDEC(torch.nn.Module):
                 torch.save(self.state_dict(), model_path)
 
                 stat = '\n'.join(map(str, epoch_losses))
-                epoch_writer.write('\n' + stat)
+                epoch_writer.write(stat)
                 epoch_losses.clear()
 
                 stat = '\n'.join(map(str, iteration_losses))
-                iteration_writer.write('\n' + stat)
+                iteration_writer.write(stat)
                 iteration_losses.clear()
 
         epoch_writer.close()

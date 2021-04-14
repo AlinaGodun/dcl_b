@@ -2,32 +2,24 @@
 
 # internal packages
 import os
-from collections import Counter, OrderedDict
 
 # external packages
 import argparse
-import torch
-import torchvision
-import numpy as np
 import sklearn
-from sklearn.cluster import KMeans
-from sklearn.metrics import normalized_mutual_info_score
-from sklearn.decomposition import PCA
-import matplotlib
-from matplotlib import pyplot as plt
 
 # util functions
-from models.dec.IDEC import IDEC
-from models.simclr.loss import SimCLRLoss
+from sklearn.cluster import KMeans
+
 from util.util import *
 
 # dataset functions
 from dataset import load_util
 
 # autoencoder
-from models.autoencoder.conv_ae import ConvAE
 from models.simclr.simclr import SimCLR
 from models.rotnet.rotnet import RotNet
+
+from models.rotnet.IDEC import IDEC
 
 
 def train_model(model, batch_size, learning_rate, epochs, data, train, device):
@@ -121,8 +113,8 @@ args_list = []
 # train_model(model, batch_size, learning_rate, epochs, data, train, device)
 
 
-model = RotNet(num_classes=4, num_blocks=4)
-train_model(model, batch_size, 0.1, epochs, data, train, device)
+# model = RotNet(num_classes=4, num_blocks=4)
+# train_model(model, batch_size, 0.1, epochs, data, train, device)
 
 # resnet_model = args.resnet
 # model = SimCLR(resnet_model='resnet18')
@@ -148,3 +140,26 @@ train_model(model, batch_size, 0.1, epochs, data, train, device)
 # idec_simclr.load_state_dict(state_dict)
 # idec_simclr.to(device)
 # train_model(idec_simclr, batch_size, learning_rate, epochs, data, train, device)
+
+model = RotNet(num_classes=4, num_blocks=4)
+
+state_dict = torch.load(f'trained_models/pretrained_RotNet.pth', map_location='cpu')
+model.load_state_dict(state_dict)
+model.to(device)
+
+data = load_util.load_custom_cifar('./data', download=False, data_percent=data_percent, for_model='RotNet')
+trainloader = torch.utils.data.DataLoader(data,
+                                                  batch_size=batch_size,
+                                                  shuffle=True,
+                                                  drop_last=True)
+
+embedded_data, labels = model.encode_batchwise(trainloader, device=device, layer=['conv2'], flatten=True)
+n_clusters = len(set(labels))
+kmeans = KMeans(n_clusters=n_clusters)
+kmeans.fit(embedded_data)
+nmi = normalized_mutual_info_score(labels, kmeans.labels_)
+print(f"NMI: {nmi:.4f}")
+
+loss = torch.nn.CrossEntropyLoss()
+idec_simclr = IDEC(model, loss, kmeans.cluster_centers_, device)
+train_model(idec_simclr, batch_size, learning_rate, epochs, data, train, device)

@@ -129,6 +129,21 @@ class RotNet(nn.Module):
 
         return self
 
+    def encode_batchwise(self, dataloader, device, layer, flatten=False):
+        """ Utility function for embedding the whole data set in a mini-batch fashion
+        """
+        embeddings = []
+        labels = []
+        for batch, blabels in dataloader:
+            batch_data = batch.to(device)
+            feats = self(batch_data, layer)
+            if flatten:
+                embeddings.append(feats.flatten(start_dim=1).detach().cpu())
+            else:
+                embeddings.append(feats.detach().cpu())
+            labels = labels + blabels.tolist()
+        return torch.cat(embeddings, dim=0).numpy(), labels
+
 
 class RotNetBasicBlock(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size):
