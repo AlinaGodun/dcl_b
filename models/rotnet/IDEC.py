@@ -1,9 +1,9 @@
 from models.dec.DEC import DEC
-from models.simclr.simclr import *
+from models.rotnet.rotnet import RotNet
 import torch
 
 class IDEC(torch.nn.Module):
-    def __init__(self, model=SimCLR(resnet_model='resnet18'), loss=None, cluster_centers=torch.rand(size=(10, 512)), device='cpu'):
+    def __init__(self, model=RotNet(num_classes=4, num_blocks=4), loss=None, cluster_centers=torch.rand(size=(10, 12288)), device='cpu'):
         super().__init__()
         self.model = model
         self.name = f'IDEC_{model.name}'
@@ -13,7 +13,7 @@ class IDEC(torch.nn.Module):
     def fit(self, trainloader, epochs, start_lr, device, model_path=None, weight_decay=5e-4, with_gf=False, degree_of_space_distortion=0.1, idec_factor=0.1):
         lr = start_lr * idec_factor
         optimizer = torch.optim.SGD(self.parameters(), lr=lr, momentum=0.9, nesterov=True, weight_decay=weight_decay)
-        rotnet_loss = nn.CrossEntropyLoss()
+        rotnet_loss = torch.nn.CrossEntropyLoss()
         i = 0
 
         epoch_writer = open(f"epoch_stat_{self.name}.csv", "w")
