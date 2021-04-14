@@ -162,4 +162,4 @@ print(f"NMI: {nmi:.4f}")
 
 loss = torch.nn.CrossEntropyLoss()
 idec_simclr = IDEC(model, loss, kmeans.cluster_centers_, device)
-train_model(idec_simclr, batch_size, learning_rate, epochs, data, train, device)
+train_model(idec_simclr, batch_size, 0.001, epochs, data, train, device)

@@ -33,7 +33,6 @@ class IDEC(torch.nn.Module):
                 # print(x.shape)
                 classifier_feats = self.model(x)
                 feats = self.model(x, ['conv2']).flatten(start_dim=1)
-                print(feats.shape)
 
                 # print(feats.shape)
                 base_loss = rotnet_loss(classifier_feats, labels)
