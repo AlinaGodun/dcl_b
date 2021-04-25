@@ -8,7 +8,7 @@ from models.rotnet.transforms import RotNetTransforms
 class CustomCifar(Dataset):
     def __init__(self, train_path, download=False, for_model=None, data_percent=0.4, train=True):
         model_transforms = {
-            'SimCLR': SimCLRTransforms(with_original=True),
+            'SimCLR': SimCLRTransforms(with_original=False),
             'Test': torchvision.transforms.Compose([torchvision.transforms.ToTensor()]),
             None: torchvision.transforms.Compose([torchvision.transforms.ToTensor()])
         }

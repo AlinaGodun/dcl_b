@@ -7,7 +7,7 @@ from util.gradflow_check import plot_grad_flow
 
 
 class RotNet(nn.Module):
-    def __init__(self, num_classes, in_channels=3, num_blocks=3):
+    def __init__(self, num_classes, in_channels=3, num_blocks=3, num_clusters=10):
         super(RotNet, self).__init__()
 
         self.name = 'RotNet'
@@ -39,8 +39,10 @@ class RotNet(nn.Module):
 
         main_blocks.append(nn.Sequential(OrderedDict([
             ('GlobalAveragePooling', RotNetGlobalAveragePooling()),
-            ('Classifier', nn.Linear(num_channels[1], num_classes))
+            ('Features', nn.Linear(num_channels[1], num_clusters)),
+            ('Classifier', nn.Linear(num_clusters, num_classes))
         ])))
+
 
         self.feat_blocks = nn.ModuleList(main_blocks)
         self.feat_block_names = [f'conv{s+1}' for s in range(num_blocks)] + ['classifier']
