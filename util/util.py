@@ -4,7 +4,15 @@ import numpy as np
 import matplotlib
 # matplotlib.use("TkAgg")
 from matplotlib import pyplot as plt
+from sklearn.cluster import KMeans
+from sklearn.decomposition import PCA
 from sklearn.metrics import normalized_mutual_info_score
+
+from models.simclr.IDEC import IDEC as SimClrIDEC
+from models.rotnet.IDEC import IDEC as RotNetIDEC
+from models.rotnet.rotnet import RotNet
+from models.simclr.simclr import SimCLR
+import seaborn as sns
 
 
 def denormalize(tensor: torch.Tensor, mean: float = 0.1307, std: float = 0.3081) -> torch.Tensor:
@@ -86,3 +94,80 @@ def evaluate_batchwise(dataloader, model, cluster_module, device):
     predictions = torch.cat(predictions, dim=0).numpy()
     labels = torch.cat(labels, dim=0).numpy()
     return normalized_mutual_info_score(labels, predictions)
+
+
+def load_model(name, device):
+    if 'RotNet' in name:
+        if 'DEC' not in name:
+            model = RotNet(num_classes=4)
+        else:
+            model = RotNetIDEC(model=RotNet(num_classes=4), cluster_centers=torch.rand(size=(4, 12288)))
+    elif 'SimCLR' in name:
+        if 'r18' in name:
+            resnet_model = 'resnet18'
+        else:
+            resnet_model = 'resnet50'
+
+        if 'pretrained' in name:
+            model = SimCLR(resnet_model=resnet_model)
+        else:
+            if ('c10') in name:
+                model = SimClrIDEC(cluster_centers=torch.rand(size=(10, 2048)))
+            elif 'c30' in name:
+                model = SimClrIDEC(cluster_centers=torch.rand(size=(30, 2048)))
+            else:
+                model = SimClrIDEC()
+
+    state_dict = torch.load(f'trained_models/{name}', map_location=device)
+    model.load_state_dict(state_dict)
+    model.to(device)
+    return model
+
+
+def compute_nmi_and_pca(model, name, colors_classes, device, testloader, layer=['conv2']):
+    if 'pretrained' in name:
+        decoder = model
+    else:
+        decoder = model.model
+
+    print(f'{name}')
+    print('Starting encoding...')
+    if 'RotNet' in name:
+        embedded_data, labels = decoder.encode_batchwise(testloader, device=device, layer=layer, flatten=True)
+    else:
+        embedded_data, labels = decoder.encode_batchwise(testloader, device)
+    lable_classes = [colors_classes[l] for l in labels]
+
+    print('Starting KMeans...')
+    n_clusters = len(set(labels))
+    kmeans = KMeans(n_clusters=n_clusters)
+    kmeans.fit(embedded_data)
+    nmi = normalized_mutual_info_score(labels, kmeans.labels_)
+
+    print('Starting PCA...')
+    pca = PCA(n_components=2)
+    reduced_data = pca.fit_transform(embedded_data)
+
+    return labels, kmeans, nmi, reduced_data, lable_classes
+
+
+def plot_pca_and_nmi(name, axes, nmi, pca, lable_classes):
+    axes.set_title(f'{name} Kmeans NMI: {nmi:.4f}')
+    sns.scatterplot(ax=axes, x=pca[:,0], y=pca[:,1], hue=lable_classes, s=7, palette='viridis')
+
+
+def plot_class_representation(pca, name, lable_classes):
+    print(f'{name} class representation')
+    lc = np.array(lable_classes)
+    fig, axes = plt.subplots(2, 5, figsize=(15, 6))
+    axes = axes.flatten()
+
+    for i, c in enumerate(set(lable_classes)):
+        ids = np.where(lc == c)[0]
+        axes[i].set(title=f'class {c}')
+        axes[i].tick_params(bottom=False, left=False)
+        axes[i].set(xticklabels=[], yticklabels=[])
+        sns.scatterplot(ax=axes[i], x=pca[:, 0], y=pca[:, 1], s=7, color='#d1dade')
+        sns.scatterplot(ax=axes[i], x=pca[ids, 0], y=pca[ids, 1], s=7, color='#ff802b')
+
+    plt.show()
