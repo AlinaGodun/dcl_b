@@ -93,7 +93,7 @@ train = True
 # load datasets and create dataloaders
 # data, testdata = load_util.load_cifar('./data', download=True, for_model='SimCLR')
 data_percent = args.data_percent
-data = load_util.load_custom_cifar('./data', download=False, data_percent=data_percent, for_model='SimCLR')
+data = load_util.load_custom_cifar('./data', download=False, data_percent=data_percent, for_model='RotNet')
 
 # cluster_data = load_util.load_custom_cifar('./data', download=False, data_percent=data_percent)
 # cluster_trainloader = torch.utils.data.DataLoader(cluster_data,
@@ -109,5 +109,24 @@ print('Data loaded...')
 # create model
 args_list = []
 
-model = SimCLR(resnet_model='resnet50')
-train_model(model, batch_size, learning_rate, epochs, data, train, device)
+model = RotNet(num_classes=4)
+state_dict = torch.load(f'trained_models/pretrained_RotNet_features.pth', map_location='cpu')
+model.load_state_dict(state_dict)
+model.to(device)
+
+data = load_util.load_custom_cifar('./data', download=False, data_percent=data_percent, for_model='RotNet')
+trainloader = torch.utils.data.DataLoader(data,
+                                          batch_size=batch_size,
+                                          shuffle=True,
+                                          drop_last=True)
+
+embedded_data, labels = model.encode_batchwise(trainloader, device=device, layer=['conv2'], flatten=True)
+n_clusters = len(set(labels))
+kmeans = KMeans(n_clusters=n_clusters)
+kmeans.fit(embedded_data)
+nmi = normalized_mutual_info_score(labels, kmeans.labels_)
+print(f"NMI: {nmi:.4f}")
+
+loss = torch.nn.CrossEntropyLoss()
+idec_simclr = IDEC(model, loss, kmeans.cluster_centers_, device)
+train_model(idec_simclr, batch_size, 0.001, epochs, data, train, device)

@@ -35,12 +35,13 @@ class IDEC(torch.nn.Module):
                 feats = self.model(x, ['conv2']).flatten(start_dim=1)
 
                 # print(feats.shape)
-                base_loss = rotnet_loss(classifier_feats, labels)
+                # base_loss = rotnet_loss(classifier_feats, labels)
                 cluster_loss = self.cluster_module.loss_dec_compression(feats)
-                loss = base_loss + degree_of_space_distortion * cluster_loss
+                # loss = base_loss + degree_of_space_distortion * cluster_loss
+                loss = cluster_loss
 
+                optimizer.zero_grad()
                 loss.backward()
-
                 optimizer.step()
 
                 iteration_losses.append(f'{epoch},{i},{loss.item():.4f}')

@@ -37,15 +37,19 @@ class RotNet(nn.Module):
 
         main_blocks += additional_blocks
 
-        main_blocks.append(nn.Sequential(OrderedDict([
-            ('GlobalAveragePooling', RotNetGlobalAveragePooling()),
-            ('Features', nn.Linear(num_channels[1], num_clusters)),
-            ('Classifier', nn.Linear(num_clusters, num_classes))
-        ])))
+        main_blocks += [RotNetGlobalAveragePooling()]
+        main_blocks += [nn.Linear(num_channels[1], num_clusters)]
+        main_blocks += [nn.Linear(num_clusters, num_classes)]
+
+        # main_blocks.append(nn.Sequential(OrderedDict([
+        #     ('GlobalAveragePooling', RotNetGlobalAveragePooling()),
+        #     ('Features', nn.Linear(num_channels[1], num_clusters)),
+        #     ('Classifier', nn.Linear(num_clusters, num_classes))
+        # ])))
 
 
         self.feat_blocks = nn.ModuleList(main_blocks)
-        self.feat_block_names = [f'conv{s+1}' for s in range(num_blocks)] + ['classifier']
+        self.feat_block_names = [f'conv{s+1}' for s in range(num_blocks)] + ['pooling'] + ['features'] + ['classifier']
 
     def parse_out_keys_arg(self, out_feat_keys):
         # By default return the features of the last layer / module.
