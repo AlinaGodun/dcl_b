@@ -3,7 +3,7 @@ from models.simclr.simclr import *
 import torch
 
 class IDEC(torch.nn.Module):
-    def __init__(self, model=SimCLR(resnet_model='resnet18'), loss=None, cluster_centers=torch.rand(size=(10, 512)), device='cpu'):
+    def __init__(self, model=SimCLR(resnet_model='resnet50'), loss=None, cluster_centers=torch.rand(size=(10, 2048)), device='cpu'):
         super().__init__()
         self.model = model
         self.name = f'IDEC_{model.name}'
