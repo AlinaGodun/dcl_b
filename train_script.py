@@ -43,7 +43,7 @@ def train_model(model, batch_size, learning_rate, epochs, data, train, device):
                                                   shuffle=True,
                                                   drop_last=True)
 
-        model = model.fit(trainloader=trainloader, epochs=epochs, start_lr=learning_rate, device=device, model_path=pretrained_model_path)
+        model = model.fit(data_loader=trainloader, epochs=epochs, start_lr=learning_rate, device=device, model_path=pretrained_model_path)
         torch.save(model.state_dict(), pretrained_model_path)
     else:
         state_dict = torch.load(pretrained_model_path, map_location=device)

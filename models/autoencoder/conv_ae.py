@@ -10,7 +10,7 @@ def fit(model, trainloader, epochs, start_lr, device, model_path=None, loss_fn=N
     i = 0
     for epoch_i in range(epochs):
         for batch_data in trainloader:
-            model.train()
+            model.fit()
             # load batch on device
             batch = batch_data.to(device)
             # reset gradients from last iteration

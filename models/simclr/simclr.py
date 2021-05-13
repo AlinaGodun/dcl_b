@@ -10,7 +10,7 @@ from util.gradflow_check import plot_grad_flow
 
 class SimCLR(AbstractModel):
     def __init__(self, output_dim=128, resnet_model='resnet50', tau=0.5):
-        super().__init__('SimCLR', loss=SimCLRLoss(tau))
+        super().__init__(name='SimCLR', loss=SimCLRLoss(tau))
 
         self.base_encoder = self.get_base_encoder(resnet_model)
 
@@ -50,8 +50,8 @@ class SimCLR(AbstractModel):
             labels = labels + batch_labels.tolist()
         return torch.cat(embeddings, dim=0).numpy(), np.array(labels)
 
-    def train(self, data_loader, epochs, lr, device, model_path, weight_decay=1e-6, gf=False, write_stats=True):
-        optimizer = torch.optim.Adam(self.parameters(), lr=lr, weight_decay=weight_decay)
+    def fit(self, data_loader, epochs, start_lr, device, model_path, weight_decay=1e-6, gf=False, write_stats=True):
+        optimizer = torch.optim.Adam(self.parameters(), lr=start_lr, weight_decay=weight_decay)
         i = 0
 
         for epoch in range(epochs):

@@ -7,12 +7,13 @@ from models.dec.DEC import DEC
 
 
 class AbstractModel(ABC, nn.Module):
-    def __init__(self, name, loss, epoch_stats=['epoch,iteration,loss'], it_stats=['epoch,iteration,loss']):
-        super().__init__()
+    def __init__(self, name, loss, epoch_stats=None, it_stats=None):
+        super(AbstractModel, self).__init__()
         self.name = name
         self.loss = loss
-        self.epoch_stats = epoch_stats
-        self.iteration_stats = it_stats
+
+        self.epoch_stats = ['epoch,iteration,loss'] if epoch_stats is None else epoch_stats
+        self.iteration_stats = ['epoch,iteration,loss'] if it_stats is None else it_stats
 
     @abstractmethod
     def forward(self, x):
@@ -23,7 +24,7 @@ class AbstractModel(ABC, nn.Module):
         pass
 
     @abstractmethod
-    def train(self, data_loader, epochs, lr, device, model_path=None, weight_decay=1e-6, gf=False, statistics=True):
+    def fit(self, data_loader, epochs, start_lr, device, model_path, weight_decay, gf=False, write_stats=True):
         pass
 
     def init_statistics(self):
@@ -36,9 +37,6 @@ class AbstractModel(ABC, nn.Module):
         stat = '\n'.join(map(str, stat_list))
         writer.write(stat)
         stat_list.clear()
-
-
-
 
 
 class AbstractDecModel(ABC, AbstractModel):

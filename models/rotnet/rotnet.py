@@ -3,42 +3,44 @@ from collections import OrderedDict
 import torch.nn as nn
 import torch.nn.functional
 import torch
+import numpy as np
+
+from models.abstract_model.models import AbstractModel
 from util.gradflow_check import plot_grad_flow
 
 
-class RotNet(nn.Module):
+class RotNet(AbstractModel):
     def __init__(self, num_classes, in_channels=3, num_blocks=3, num_clusters=10):
-        super(RotNet, self).__init__()
+        super().__init__(name='RotNet', loss=nn.CrossEntropyLoss())
 
-        self.name = 'RotNet'
-        num_channels = {1: 192, 2: 160, 3: 96}
+        n_channels = {1: 192, 2: 160, 3: 96}
 
         main_blocks = [nn.Sequential(OrderedDict([
-            ('B1_ConvB1', RotNetBasicBlock(in_channels=in_channels, out_channels=num_channels[1], kernel_size=5)),
-            ('B1_ConvB2', RotNetBasicBlock(in_channels=num_channels[1], out_channels=num_channels[2], kernel_size=1)),
-            ('B1_ConvB3', RotNetBasicBlock(in_channels=num_channels[2], out_channels=num_channels[3], kernel_size=1)),
+            ('B1_ConvB1', RotNetBasicBlock(in_channels=in_channels, out_channels=n_channels[1], kernel_size=5)),
+            ('B1_ConvB2', RotNetBasicBlock(in_channels=n_channels[1], out_channels=n_channels[2], kernel_size=1)),
+            ('B1_ConvB3', RotNetBasicBlock(in_channels=n_channels[2], out_channels=n_channels[3], kernel_size=1)),
             ('B1_MaxPool', nn.MaxPool2d(kernel_size=3, stride=2, padding=1))
         ])), nn.Sequential(OrderedDict([
-            ('B2_ConvB1', RotNetBasicBlock(in_channels=num_channels[3], out_channels=num_channels[1], kernel_size=5)),
-            ('B2_ConvB2', RotNetBasicBlock(in_channels=num_channels[1], out_channels=num_channels[1], kernel_size=1)),
-            ('B2_ConvB3', RotNetBasicBlock(in_channels=num_channels[1], out_channels=num_channels[1], kernel_size=1)),
+            ('B2_ConvB1', RotNetBasicBlock(in_channels=n_channels[3], out_channels=n_channels[1], kernel_size=5)),
+            ('B2_ConvB2', RotNetBasicBlock(in_channels=n_channels[1], out_channels=n_channels[1], kernel_size=1)),
+            ('B2_ConvB3', RotNetBasicBlock(in_channels=n_channels[1], out_channels=n_channels[1], kernel_size=1)),
             ('B2_AvgPool', nn.AvgPool2d(kernel_size=3, stride=2, padding=1))
         ])), nn.Sequential(OrderedDict([
-            ('B3_ConvB1', RotNetBasicBlock(in_channels=num_channels[1], out_channels=num_channels[1], kernel_size=3)),
-            ('B3_ConvB2', RotNetBasicBlock(in_channels=num_channels[1], out_channels=num_channels[1], kernel_size=1)),
-            ('B3_ConvB3', RotNetBasicBlock(in_channels=num_channels[1], out_channels=num_channels[1], kernel_size=1))
+            ('B3_ConvB1', RotNetBasicBlock(in_channels=n_channels[1], out_channels=n_channels[1], kernel_size=3)),
+            ('B3_ConvB2', RotNetBasicBlock(in_channels=n_channels[1], out_channels=n_channels[1], kernel_size=1)),
+            ('B3_ConvB3', RotNetBasicBlock(in_channels=n_channels[1], out_channels=n_channels[1], kernel_size=1))
         ]))]
 
         additional_blocks = [nn.Sequential(OrderedDict([
-            (f'B{b+1}_ConvB1', RotNetBasicBlock(in_channels=num_channels[1], out_channels=num_channels[1], kernel_size=3)),
-            (f'B{b+1}_ConvB2', RotNetBasicBlock(in_channels=num_channels[1], out_channels=num_channels[1], kernel_size=1)),
-            (f'B{b+1}_ConvB3', RotNetBasicBlock(in_channels=num_channels[1], out_channels=num_channels[1], kernel_size=1)),
+            (f'B{b+1}_ConvB1', RotNetBasicBlock(in_channels=n_channels[1], out_channels=n_channels[1], kernel_size=3)),
+            (f'B{b+1}_ConvB2', RotNetBasicBlock(in_channels=n_channels[1], out_channels=n_channels[1], kernel_size=1)),
+            (f'B{b+1}_ConvB3', RotNetBasicBlock(in_channels=n_channels[1], out_channels=n_channels[1], kernel_size=1)),
         ])) for b in range(3, num_blocks)]
 
         main_blocks += additional_blocks
 
         main_blocks += [RotNetGlobalAveragePooling()]
-        main_blocks += [nn.Linear(num_channels[1], num_clusters)]
+        main_blocks += [nn.Linear(n_channels[1], num_clusters)]
         main_blocks += [nn.Linear(num_clusters, num_classes)]
 
         # main_blocks.append(nn.Sequential(OrderedDict([
@@ -47,108 +49,73 @@ class RotNet(nn.Module):
         #     ('Classifier', nn.Linear(num_clusters, num_classes))
         # ])))
 
-
         self.feat_blocks = nn.ModuleList(main_blocks)
         self.feat_block_names = [f'conv{s+1}' for s in range(num_blocks)] + ['pooling'] + ['features'] + ['classifier']
 
-    def parse_out_keys_arg(self, out_feat_keys):
-        # By default return the features of the last layer / module.
-        out_feat_keys = [self.feat_block_names[-1]] if out_feat_keys is None else out_feat_keys
+    def forward(self, x, layer='classifier'):
+        if layer not in self.feat_block_names:
+            raise KeyError(f'Provided layer: {layer} is not available. Available layers: {self.feat_block_names}')
 
-        if len(out_feat_keys) == 0:
-            raise ValueError('No output feature keys given.')
-        for key in out_feat_keys:
-            if key not in self.feat_block_names:
-                raise ValueError(
-                    f'Provided feature name: {key} does not exist. Existing feature names: {self.feat_block_names}.')
+        layer_index = self.feat_block_names.index(layer)
+        return self.feat_blocks[layer_index]
 
-        # Find the highest output feature in `out_feat_keys
-        max_out_feat = max([self.feat_block_names.index(key) for key in out_feat_keys])
+    def forward_batch(self, data_loader, device, flatten=True, layer='conv2'):
+        embeddings = []
+        labels = []
+        for batch, batch_labels in data_loader:
+            batch_data = batch.to(device)
+            feats = self(batch_data, layer)
 
-        return out_feat_keys, max_out_feat
+            if flatten:
+                feats = feats.flatten(start_dim=1)
 
-    def forward(self, x, out_feat_keys=None):
-        out_feat_keys, max_out_feat = self.parse_out_keys_arg(out_feat_keys)
-        out_feats = [None] * len(out_feat_keys)
+            embeddings.append(feats.detach().cpu())
+            labels = labels + batch_labels.tolist()
+        return torch.cat(embeddings, dim=0).numpy(), np.array(labels)
 
-        feat = x
-        for i in range(max_out_feat + 1):
-            key = self.feat_block_names[i]
-            feat = self.feat_blocks[i](feat)
-            if key in out_feat_keys:
-                out_feats[out_feat_keys.index(key)] = feat
-
-        out_feats = out_feats[0] if len(out_feats) == 1 else out_feats
-        return out_feats
-
-    def fit(self, trainloader, epochs, start_lr, device, model_path=None, weight_decay=5e-4, with_gf=False):
-        optimizer = torch.optim.SGD(self.parameters(), lr=start_lr, momentum=0.9, nesterov=True, weight_decay=weight_decay)
+    def fit(self, data_loader, epochs, start_lr, device, model_path, weight_decay=5e-4, gf=False, write_stats=True):
+        optimizer = torch.optim.SGD(self.parameters(),
+                                    lr=start_lr,
+                                    momentum=0.9,
+                                    nesterov=True,
+                                    weight_decay=weight_decay)
         scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[20, 40, 45], gamma=0.2)
-        rotnet_loss = nn.CrossEntropyLoss()
         i = 0
 
-        epoch_writer = open(f"epoch_stat_{self.name}.csv", "w")
-        iteration_writer = open(f"iteration_stat_{self.name}.csv", "w")
-
-        epoch_losses = ['epoch,iteration,loss']
-        iteration_losses = ['epoch,iteration,loss']
-
         for epoch in range(epochs):
-            for step, (x, labels) in enumerate(trainloader):
+            for step, (x, labels) in enumerate(data_loader):
                 i += 1
                 x = x.to(device)
                 labels = labels.to(device)
 
                 optimizer.zero_grad()
 
-                # print(x.shape)
                 feats = self(x)
-                # print(feats.shape)
-                loss = rotnet_loss(feats, labels)
+                loss = self.loss(feats, labels)
 
                 loss.backward()
-                if with_gf:
+                if gf:
                     plot_grad_flow(self.named_parameters())
-
                 optimizer.step()
 
-                iteration_losses.append(f'{epoch},{i},{loss.item():.4f}')
+                self.iteration_stat.append(f'{epoch},{i},{loss.item():.4f}')
+            self.epoch_stats.append(f'{epoch},{i},{loss.item():.4f}')
             scheduler.step()
 
-            epoch_losses.append(f'{epoch},{i},{loss.item():.4f}')
-
-            if epoch % 5 == 0 and model_path is not None:
+            if epoch % 5 == 0:
                 print(f"{self.name}: Epoch {epoch + 1}/{epochs} - Iteration {i} - Train loss:{loss.item():.4f},",
                       f"LR: {optimizer.param_groups[0]['lr']}")
-                torch.save(self.state_dict(), model_path)
+                if model_path is not None:
+                    torch.save(self.state_dict(), model_path)
 
-                stat = '\n'.join(map(str, epoch_losses))
-                epoch_writer.write(stat)
-                epoch_losses.clear()
-
-                stat = '\n'.join(map(str, iteration_losses))
-                iteration_writer.write(stat)
-                iteration_losses.clear()
-
-        epoch_writer.close()
-        iteration_writer.close()
+        if write_stats:
+            ew, iw = self.init_statistics()
+            self.write_statistics(ew, self.epoch_stats)
+            self.write_statistics(iw, self.iteration_stats)
+            ew.close()
+            iw.close()
 
         return self
-
-    def encode_batchwise(self, dataloader, device, layer, flatten=False):
-        """ Utility function for embedding the whole data set in a mini-batch fashion
-        """
-        embeddings = []
-        labels = []
-        for batch, blabels in dataloader:
-            batch_data = batch.to(device)
-            feats = self(batch_data, layer)
-            if flatten:
-                embeddings.append(feats.flatten(start_dim=1).detach().cpu())
-            else:
-                embeddings.append(feats.detach().cpu())
-            labels = labels + blabels.tolist()
-        return torch.cat(embeddings, dim=0).numpy(), labels
 
 
 class RotNetBasicBlock(nn.Module):
@@ -169,5 +136,9 @@ class RotNetGlobalAveragePooling(nn.Module):
     def __init__(self):
         super(RotNetGlobalAveragePooling, self).__init__()
 
-    def forward(self, feat):
-        return torch.nn.functional.avg_pool2d(feat, (feat.size(2), feat.size(3))).view(-1, feat.size(1))
+    def forward(self, x):
+        out_channels = x.size(1)
+        kernel_size = (x.size(2), x.size(3))
+        print(kernel_size)
+        pooling = nn.functional.avg_pool2d(x, kernel_size)
+        return pooling.view(-1, out_channels)
