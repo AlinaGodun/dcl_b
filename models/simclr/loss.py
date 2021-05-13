@@ -17,7 +17,7 @@ class SimCLRLoss(nn.Module):
     def forward(self, x1, x2):
         c1 = torch.cat((x1, x2), 0)
         c2 = torch.cat((x2, x1), 0) ## detach? look closer: tensor from same tensors
-        sim_pairwise = torch.exp(self.get_sim_matrix(c1, c2)) ## replace with cosinesimilarity?
+        sim_pairwise = torch.exp(self.get_sim_matrix(c1, c2)) 
 
         nom = sim_pairwise.diag()
         denom = torch.sum(sim_pairwise, dim=0) - nom
