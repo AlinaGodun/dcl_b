@@ -7,10 +7,12 @@ from models.dec.DEC import DEC
 
 
 class AbstractModel(ABC, nn.Module):
-    def __init__(self, name, loss):
+    def __init__(self, name, loss, epoch_stats=['epoch,iteration,loss'], it_stats=['epoch,iteration,loss']):
         super().__init__()
         self.name = name
         self.loss = loss
+        self.epoch_stats = epoch_stats
+        self.iteration_stats = it_stats
 
     @abstractmethod
     def forward(self, x):
@@ -24,10 +26,24 @@ class AbstractModel(ABC, nn.Module):
     def train(self, data_loader, epochs, lr, device, model_path=None, weight_decay=1e-6, gf=False, statistics=True):
         pass
 
+    def init_statistics(self):
+        statistics_path = f'statistics/{self.name}/'
+        ew = open(f'{statistics_path}epoch_stat.csv', 'w')
+        iw = open(f'{statistics_path}iteration_stat.csv', 'w')
+        return ew, iw
+
+    def write_statistics(self, writer, stat_list):
+        stat = '\n'.join(map(str, stat_list))
+        writer.write(stat)
+        stat_list.clear()
+
+
+
+
 
 class AbstractDecModel(ABC, AbstractModel):
-    def __init__(self, name, loss, model, train_loader, device='cpu', n_clusters=None):
-        super().__init__(self, 'DEC_' + name, loss)
+    def __init__(self, model, train_loader, device='cpu', n_clusters=None):
+        super().__init__(self, 'DEC_' + model.name, model.loss)
 
         if not issubclass(model, AbstractModel):
             raise TypeError(f'Model must inherit class AbstractModel')
