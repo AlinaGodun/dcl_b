@@ -16,7 +16,12 @@ class IDEC(AbstractDecModel):
     def fit(self, data_loader, epochs, start_lr, device, model_path, weight_decay=1e-6, gf=False, write_stats=True,
             degree_of_space_distortion=0.1, dec_factor=0.1):
         lr = start_lr * dec_factor
-        optimizer = torch.optim.Adam(self.parameters(), lr=lr, weight_decay=weight_decay)
+        # optimizer = torch.optim.Adam(self.parameters(), lr=lr, weight_decay=weight_decay)
+        optimizer = torch.optim.SGD(self.parameters(),
+                                    lr=lr,
+                                    momentum=0.9,
+                                    nesterov=True,
+                                    weight_decay=weight_decay)
         i = 0
 
         for epoch in range(epochs):
@@ -32,9 +37,10 @@ class IDEC(AbstractDecModel):
                 _, mapped_feats_j = self.model(x_j)
                 feats, _ = self.model(x)
 
-                base_loss = self.loss(mapped_feats_i, mapped_feats_j)
+                # base_loss = self.loss(mapped_feats_i, mapped_feats_j)
                 cluster_loss = self.cluster_module.loss_dec_compression(feats)
-                loss = base_loss + degree_of_space_distortion * cluster_loss
+                # loss = base_loss + degree_of_space_distortion * cluster_loss
+                loss = cluster_loss
 
                 optimizer.zero_grad()
                 loss.backward()

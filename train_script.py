@@ -19,7 +19,8 @@ from dataset import load_util
 from models.simclr.simclr import SimCLR
 from models.rotnet.rotnet import RotNet
 
-from models.rotnet.IDEC import IDEC
+from models.rotnet.IDEC import IDEC as RotNetIDEC
+from models.simclr.IDEC import IDEC as SimClrIDEC
 
 
 def train_model(model, batch_size, learning_rate, epochs, data, train, device):
@@ -92,14 +93,14 @@ train = True
 
 # load datasets and create dataloaders
 # data, testdata = load_util.load_cifar('./data', download=True, for_model='SimCLR')
-data_percent = args.data_percent
-data = load_util.load_custom_cifar('./data', download=False, data_percent=data_percent, for_model='RotNet')
+# data_percent = args.data_percent
+# data = load_util.load_custom_cifar('./data', download=False, data_percent=data_percent, for_model='RotNet')
 
-# cluster_data = load_util.load_custom_cifar('./data', download=False, data_percent=data_percent)
-# cluster_trainloader = torch.utils.data.DataLoader(cluster_data,
-#                                           batch_size=batch_size,
-#                                           shuffle=True,
-#                                           drop_last=True)
+data = load_util.load_custom_cifar('./data', download=False, data_percent=args.data_percent, for_model='SimCLR')
+trainloader = torch.utils.data.DataLoader(data,
+                                          batch_size=batch_size,
+                                          shuffle=True,
+                                          drop_last=True)
 
 # plot data
 # plot_images(data[0:16])
@@ -107,7 +108,6 @@ data = load_util.load_custom_cifar('./data', download=False, data_percent=data_p
 # print('Data loaded...')
 #
 # # create model
-# args_list = []
 #
 # model = RotNet(num_classes=4)
 # state_dict = torch.load(f'trained_models/pretrained_RotNet_features.pth', map_location='cpu')
@@ -131,13 +131,6 @@ data = load_util.load_custom_cifar('./data', download=False, data_percent=data_p
 # idec_simclr = IDEC(model, loss, kmeans.cluster_centers_, device)
 # train_model(idec_simclr, batch_size, 0.001, epochs, data, train, device)
 
-test_data = load_util.load_custom_cifar('./data', download=False, train=False, data_percent=1.0, for_model='SimCLR')
-testloader = torch.utils.data.DataLoader(test_data,
-                                          batch_size=264,
-                                          shuffle=True,
-                                          drop_last=False)
-colors_classes = {i: color_class for i, color_class in zip(range(len(test_data.classes)), test_data.classes)}
-name = 'DEC_RotNet_50.pth'
-rotnet = load_model(name, device)
-print('model created')
-labels, kmeans, nmi, reduced_data, lable_classes = compute_nmi_and_pca(rotnet, name, colors_classes, device, testloader)
+pretrained_model = load_model(f'trained_models/simclr.pth', device=device)
+model = SimClrIDEC(pretrained_model, train_loader=trainloader, device=device, n_clusters=10)
+
