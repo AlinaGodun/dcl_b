@@ -8,14 +8,17 @@ from util.gradflow_check import plot_grad_flow
 class IDEC(AbstractDecModel):
     def __init__(self, model=RotNet(num_classes=4, num_blocks=4), train_loader=None, device='cpu', dec_type='DEC',
                  cluster_centres=torch.rand(size=(4, 12288))):
-        print('inside rotnet idec')
         super().__init__(model=model, train_loader=train_loader, device=device, dec_type=dec_type,
                          cluster_centres=cluster_centres)
 
     def fit(self, data_loader, epochs, start_lr, device, model_path, weight_decay=5e-4, gf=False, write_stats=True,
             degree_of_space_distortion=0.1, dec_factor=0.1):
         lr = start_lr * dec_factor
-        optimizer = torch.optim.Adam(self.parameters(), lr=lr, weight_decay=weight_decay)
+        optimizer = torch.optim.SGD(self.parameters(),
+                                    lr=lr,
+                                    momentum=0.9,
+                                    nesterov=True,
+                                    weight_decay=weight_decay)
         i = 0
 
         for epoch in range(epochs):

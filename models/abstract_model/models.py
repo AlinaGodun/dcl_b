@@ -67,7 +67,7 @@ class AbstractDecModel(nn.Module):
         return self.model.forward_batch(data_loader, device)
 
     @abstractmethod
-    def fit(self, data_loader, epochs, start_lr, device, model_path, weight_decay, gf=False, write_stats=True):
+    def fit(self, data_loader, epochs, start_lr, device, model_path, weight_decay, gf=False, write_stats=False):
         pass
 
     def init_statistics(self):

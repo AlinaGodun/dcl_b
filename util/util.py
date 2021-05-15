@@ -96,7 +96,7 @@ def evaluate_batchwise(dataloader, model, cluster_module, device):
     return normalized_mutual_info_score(labels, predictions)
 
 
-def load_model(name, device, cluster_centres=torch.rand(size=(4, 12288))):
+def load_model(name, device, cluster_centres=torch.rand(size=(10, 12288))):
     if 'RotNet' in name:
         if 'DEC' not in name:
             model = RotNet(num_classes=4)
@@ -130,21 +130,17 @@ def compute_nmi_and_pca(model, name, colors_classes, device, testloader, layer='
     else:
         decoder = model.model
 
-    print(f'{name}')
-    print('Starting encoding...')
     if 'RotNet' in name:
         embedded_data, labels = decoder.forward_batch(testloader, device=device, layer=layer, flatten=flatten)
     else:
         embedded_data, labels = decoder.forward_batch(testloader, device)
     lable_classes = [colors_classes[l] for l in labels]
 
-    print('Starting KMeans...')
     n_clusters = len(set(labels))
     kmeans = KMeans(n_clusters=n_clusters)
     kmeans.fit(embedded_data)
     nmi = normalized_mutual_info_score(labels, kmeans.labels_)
 
-    print('Starting PCA...')
     pca = PCA(n_components=2)
     reduced_data = pca.fit_transform(embedded_data)
 
