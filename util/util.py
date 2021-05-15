@@ -8,7 +8,7 @@ from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.metrics import normalized_mutual_info_score
 
-from models.simclr.IDEC import SimCLRIDEC as SimClrIDEC
+from models.simclr.IDEC import IDEC as SimClrIDEC
 from models.rotnet.IDEC import IDEC as RotNetIDEC
 from models.rotnet.rotnet import RotNet
 from models.simclr.simclr import SimCLR
@@ -101,7 +101,7 @@ def load_model(name, device, cluster_centres=torch.rand(size=(4, 12288))):
         if 'DEC' not in name:
             model = RotNet(num_classes=4)
         else:
-            model = RotNetIDEC(model=RotNet(num_classes=4), cluster_centers=cluster_centres)
+            model = RotNetIDEC(model=RotNet(num_classes=4), cluster_centres=cluster_centres, device=device)
     elif 'SimCLR' in name:
         if 'r18' in name:
             resnet_model = 'resnet18'

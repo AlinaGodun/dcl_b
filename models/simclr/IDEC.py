@@ -4,18 +4,18 @@ import torch
 
 
 class IDEC(AbstractDecModel):
-    def __init__(self, train_loader, model=SimCLR(resnet_model='resnet50'), device='cpu', n_clusters=None,
-                 dec_type='IDEC'):
+    def __init__(self, model=SimCLR(resnet_model='resnet50'), train_loader=None, device='cpu', n_clusters=None,
+                 dec_type='IDEC', cluster_centres=torch.rand(size=(196, 128))):
         super().__init__(train_loader=train_loader, model=model, device=device, n_clusters=n_clusters,
-                         dec_type=dec_type)
+                         dec_type=dec_type, cluster_centres=cluster_centres)
         self.model = model
 
         # set SimCLR ResNet to eval mode
         self.model.base_encoder.eval()
 
     def fit(self, data_loader, epochs, start_lr, device, model_path, weight_decay=1e-6, gf=False, write_stats=True,
-            degree_of_space_distortion=0.1, idec_factor=0.1):
-        lr = start_lr * idec_factor
+            degree_of_space_distortion=0.1, dec_factor=0.1):
+        lr = start_lr * dec_factor
         optimizer = torch.optim.Adam(self.parameters(), lr=lr, weight_decay=weight_decay)
         i = 0
 

@@ -6,13 +6,15 @@ from util.gradflow_check import plot_grad_flow
 
 
 class IDEC(AbstractDecModel):
-    def __init__(self, train_loader, model=RotNet(num_classes=4, num_blocks=4), device='cpu', dec_type='DEC'):
-        super().__init__(train_loader=train_loader, model=model, device=device, dec_type=dec_type)
-        self.model = model
+    def __init__(self, model=RotNet(num_classes=4, num_blocks=4), train_loader=None, device='cpu', dec_type='DEC',
+                 cluster_centres=torch.rand(size=(4, 12288))):
+        print('inside rotnet idec')
+        super().__init__(model=model, train_loader=train_loader, device=device, dec_type=dec_type,
+                         cluster_centres=cluster_centres)
 
     def fit(self, data_loader, epochs, start_lr, device, model_path, weight_decay=5e-4, gf=False, write_stats=True,
-            degree_of_space_distortion=0.1, idec_factor=0.1):
-        lr = start_lr * idec_factor
+            degree_of_space_distortion=0.1, dec_factor=0.1):
+        lr = start_lr * dec_factor
         optimizer = torch.optim.Adam(self.parameters(), lr=lr, weight_decay=weight_decay)
         i = 0
 
@@ -25,7 +27,7 @@ class IDEC(AbstractDecModel):
                 optimizer.zero_grad()
 
                 # classifier_feats = self.model(x)
-                feats = self.model(x, ['conv2']).flatten(start_dim=1)
+                feats = self.model(x, 'conv2').flatten(start_dim=1)
 
                 # base_loss = self.loss(classifier_feats, labels)
                 cluster_loss = self.cluster_module.loss_dec_compression(feats)

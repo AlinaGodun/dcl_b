@@ -2,7 +2,6 @@ import torchvision
 import numpy as np
 from torch.utils.data import Dataset
 from models.simclr.transforms import SimCLRTransforms
-from models.rotnet.transforms import RotNetTransforms
 
 
 class CustomCifar(Dataset):

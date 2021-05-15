@@ -83,8 +83,8 @@ class SimCLR(AbstractModel):
 
         if write_stats:
             ew, iw = self.init_statistics()
-            self.write_statistics(ew, self.epoch_stats)
-            self.write_statistics(iw, self.iteration_stats)
+            self.write_statistics(ew, 'epoch')
+            self.write_statistics(iw, 'iteration')
             ew.close()
             iw.close()
 

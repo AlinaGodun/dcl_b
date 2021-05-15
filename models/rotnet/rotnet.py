@@ -59,7 +59,7 @@ class RotNet(AbstractModel):
         layer_index = self.feat_block_names.index(layer)
 
         feats = x
-        for i in range(layer_index):
+        for i in range(layer_index + 1):
             feats = self.feat_blocks[i](feats)
 
         return feats
