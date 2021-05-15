@@ -57,7 +57,7 @@ def perform_experiments(resnet_model='resnet18', epochs=20, learning_rates = [0.
     for learning_rate in learning_rates:
         model = SimCLR(resnet_model=resnet_model)
         model.name = f'{model.name}_LR{learning_rate}_e{epochs}'
-        train_model(model, batch_size, learning_rate, epochs, data, data_percent, train, device)
+        train_model(model, batch_size, learning_rate, epochs, train, device)
 
 
 parser = argparse.ArgumentParser(description='train_script')
@@ -96,11 +96,14 @@ train = True
 # data_percent = args.data_percent
 # data = load_util.load_custom_cifar('./data', download=False, data_percent=data_percent, for_model='RotNet')
 
-data = load_util.load_custom_cifar('./data', download=False, data_percent=args.data_percent, for_model='SimCLR')
-trainloader = torch.utils.data.DataLoader(data,
+clusterdata = load_util.load_custom_cifar('./data', download=False, data_percent=args.data_percent, for_model=None)
+clusterloader = torch.utils.data.DataLoader(clusterdata,
                                           batch_size=batch_size,
                                           shuffle=True,
                                           drop_last=True)
+
+traindata = load_util.load_custom_cifar('./data', download=False, data_percent=args.data_percent, for_model='SimCLR')
+
 
 # plot data
 # plot_images(data[0:16])
@@ -131,6 +134,7 @@ trainloader = torch.utils.data.DataLoader(data,
 # idec_simclr = IDEC(model, loss, kmeans.cluster_centers_, device)
 # train_model(idec_simclr, batch_size, 0.001, epochs, data, train, device)
 
-pretrained_model = load_model(f'trained_models/simclr.pth', device=device)
-model = SimClrIDEC(pretrained_model, train_loader=trainloader, device=device, n_clusters=10)
+pretrained_model = load_model(f'pretrained_SimCLR_r50_e1000.pth', device=device)
+model = SimClrIDEC(pretrained_model, train_loader=clusterloader, device=device, n_clusters=10)
+train_model(model, batch_size, learning_rate, epochs, traindata, train, device)
 

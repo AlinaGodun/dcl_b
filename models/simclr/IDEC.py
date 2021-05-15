@@ -28,13 +28,13 @@ class IDEC(AbstractDecModel):
             for step, ((x, x_i, x_j), _) in enumerate(data_loader):
                 i += 1
                 x = x.to(device)
-                x_i = x_i.to(device)
-                x_j = x_j.to(device)
+                # x_i = x_i.to(device)
+                # x_j = x_j.to(device)
 
                 optimizer.zero_grad()
 
-                _, mapped_feats_i = self.model(x_i)
-                _, mapped_feats_j = self.model(x_j)
+                # _, mapped_feats_i = self.model(x_i)
+                # _, mapped_feats_j = self.model(x_j)
                 feats, _ = self.model(x)
 
                 # base_loss = self.loss(mapped_feats_i, mapped_feats_j)
