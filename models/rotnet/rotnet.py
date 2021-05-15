@@ -57,7 +57,12 @@ class RotNet(AbstractModel):
             raise KeyError(f'Provided layer: {layer} is not available. Available layers: {self.feat_block_names}')
 
         layer_index = self.feat_block_names.index(layer)
-        return self.feat_blocks[layer_index]
+
+        feats = x
+        for i in range(layer_index):
+            feats = self.feat_blocks[i](feats)
+
+        return feats
 
     def forward_batch(self, data_loader, device, flatten=True, layer='conv2'):
         embeddings = []
@@ -139,6 +144,5 @@ class RotNetGlobalAveragePooling(nn.Module):
     def forward(self, x):
         out_channels = x.size(1)
         kernel_size = (x.size(2), x.size(3))
-        print(kernel_size)
         pooling = nn.functional.avg_pool2d(x, kernel_size)
         return pooling.view(-1, out_channels)

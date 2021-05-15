@@ -1,32 +1,26 @@
-from models.dec.DEC import DEC
+from models.abstract_model.models import AbstractDecModel
 from models.simclr.simclr import *
 import torch
 
-class IDEC(torch.nn.Module):
-    def __init__(self, model=SimCLR(resnet_model='resnet50'), loss=None, cluster_centers=torch.rand(size=(10, 2048)), device='cpu'):
-        super().__init__()
-        self.model = model
-        self.name = f'IDEC_{model.name}'
-        self.loss = loss
-        self.cluster_module = DEC(cluster_centers).to(device)
 
-        ## set resnet in simclr to eval mode
+class IDEC(AbstractDecModel):
+    def __init__(self, train_loader, model=SimCLR(resnet_model='resnet50'), device='cpu', n_clusters=None,
+                 dec_type='IDEC'):
+        super().__init__(train_loader=train_loader, model=model, device=device, n_clusters=n_clusters,
+                         dec_type=dec_type)
+        self.model = model
+
+        # set SimCLR ResNet to eval mode
         self.model.base_encoder.eval()
 
-
-    def fit(self, trainloader, epochs, start_lr, device, model_path=None, degree_of_space_distortion=0.1, idec_factor=0.1, weight_decay=1e-6):
+    def fit(self, data_loader, epochs, start_lr, device, model_path, weight_decay=1e-6, gf=False, write_stats=True,
+            degree_of_space_distortion=0.1, idec_factor=0.1):
         lr = start_lr * idec_factor
         optimizer = torch.optim.Adam(self.parameters(), lr=lr, weight_decay=weight_decay)
         i = 0
 
-        epoch_writer = open(f"epoch_stat_{self.name}.csv", "w")
-        iteration_writer = open(f"iteration_stat_{self.name}.csv", "w")
-
-        epoch_losses = ['epoch,iteration,loss']
-        iteration_losses = ['epoch,iteration,loss']
-
         for epoch in range(epochs):
-            for step, ((x, x_i, x_j), _) in enumerate(trainloader):
+            for step, ((x, x_i, x_j), _) in enumerate(data_loader):
                 i += 1
                 x = x.to(device)
                 x_i = x_i.to(device)
@@ -44,26 +38,24 @@ class IDEC(torch.nn.Module):
 
                 optimizer.zero_grad()
                 loss.backward()
+                if gf:
+                    plot_grad_flow(self.named_parameters())
                 optimizer.step()
 
-                iteration_losses.append(f'{epoch},{i},{loss.item():.4f}')
+                self.iteration_stats.append(f'{epoch},{i},{loss.item():.4f}')
+            self.epoch_stats.append(f'{epoch},{i},{loss.item():.4f}')
 
-            epoch_losses.append(f'{epoch},{i},{loss.item():.4f}')
-
-            if epoch % 5 == 0 and model_path is not None:
+            if epoch % 5 == 0:
                 print(f"{self.name}: Epoch {epoch + 1}/{epochs} - Iteration {i} - Train loss:{loss.item():.4f},",
                       f"LR: {optimizer.param_groups[0]['lr']}")
-                torch.save(self.state_dict(), model_path)
+                if model_path is not None:
+                    torch.save(self.state_dict(), model_path)
 
-                stat = '\n'.join(map(str, epoch_losses))
-                epoch_writer.write('\n' + stat)
-                epoch_losses.clear()
-
-                stat = '\n'.join(map(str, iteration_losses))
-                iteration_writer.write('\n' + stat)
-                iteration_losses.clear()
-
-        epoch_writer.close()
-        iteration_writer.close()
+        if write_stats:
+            ew, iw = self.init_statistics()
+            self.write_statistics(ew, self.epoch_stats)
+            self.write_statistics(iw, self.iteration_stats)
+            ew.close()
+            iw.close()
 
         return self

@@ -31,9 +31,9 @@ class SimCLR(AbstractModel):
             'resnet50': torchvision.models.resnet50,
         }
         if resnet_model not in resnet_models.keys():
-            raise KeyError(f'{resnet_model} is not in the list of available resnet models. \
-                Available resnet models: {self.resnet.keys()}')
-        return self.resnet_models[resnet_model]()
+            raise KeyError(f'Provided resnet model: {resnet_model} is not available. \
+             Available resnet models: {resnet_models}')
+        return resnet_models[resnet_model]()
 
     def forward(self, x):
         feats = self.base_encoder(x)

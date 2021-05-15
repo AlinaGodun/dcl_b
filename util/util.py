@@ -8,7 +8,7 @@ from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.metrics import normalized_mutual_info_score
 
-from models.simclr.IDEC import IDEC as SimClrIDEC
+from models.simclr.IDEC import SimCLRIDEC as SimClrIDEC
 from models.rotnet.IDEC import IDEC as RotNetIDEC
 from models.rotnet.rotnet import RotNet
 from models.simclr.simclr import SimCLR
@@ -96,12 +96,12 @@ def evaluate_batchwise(dataloader, model, cluster_module, device):
     return normalized_mutual_info_score(labels, predictions)
 
 
-def load_model(name, device):
+def load_model(name, device, cluster_centres=torch.rand(size=(4, 12288))):
     if 'RotNet' in name:
         if 'DEC' not in name:
             model = RotNet(num_classes=4)
         else:
-            model = RotNetIDEC(model=RotNet(num_classes=4), cluster_centers=torch.rand(size=(4, 12288)))
+            model = RotNetIDEC(model=RotNet(num_classes=4), cluster_centers=cluster_centres)
     elif 'SimCLR' in name:
         if 'r18' in name:
             resnet_model = 'resnet18'
@@ -124,7 +124,7 @@ def load_model(name, device):
     return model
 
 
-def compute_nmi_and_pca(model, name, colors_classes, device, testloader, layer=['conv2']):
+def compute_nmi_and_pca(model, name, colors_classes, device, testloader, layer='conv2', flatten=True):
     if 'pretrained' in name:
         decoder = model
     else:
@@ -133,9 +133,9 @@ def compute_nmi_and_pca(model, name, colors_classes, device, testloader, layer=[
     print(f'{name}')
     print('Starting encoding...')
     if 'RotNet' in name:
-        embedded_data, labels = decoder.encode_batchwise(testloader, device=device, layer=layer, flatten=True)
+        embedded_data, labels = decoder.forward_batch(testloader, device=device, layer=layer, flatten=flatten)
     else:
-        embedded_data, labels = decoder.encode_batchwise(testloader, device)
+        embedded_data, labels = decoder.forward_batch(testloader, device)
     lable_classes = [colors_classes[l] for l in labels]
 
     print('Starting KMeans...')

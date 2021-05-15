@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod, ABC
 import torch.nn as nn
 from sklearn.cluster import KMeans
 from sklearn.metrics import normalized_mutual_info_score
@@ -6,7 +6,7 @@ from sklearn.metrics import normalized_mutual_info_score
 from models.dec.DEC import DEC
 
 
-class AbstractModel(ABC, nn.Module):
+class AbstractModel(nn.Module):
     def __init__(self, name, loss, epoch_stats=None, it_stats=None):
         super(AbstractModel, self).__init__()
         self.name = name
@@ -39,9 +39,9 @@ class AbstractModel(ABC, nn.Module):
         stat_list.clear()
 
 
-class AbstractDecModel(ABC, AbstractModel):
-    def __init__(self, model, train_loader, device='cpu', n_clusters=None):
-        super().__init__(self, 'DEC_' + model.name, model.loss)
+class AbstractDecModel(AbstractModel, ABC):
+    def __init__(self, train_loader, model, device='cpu', n_clusters=None, dec_type='IDEC'):
+        super().__init__(self, f'{dec_type}_{model.name}', model.loss)
 
         if not issubclass(model, AbstractModel):
             raise TypeError(f'Model must inherit class AbstractModel')
