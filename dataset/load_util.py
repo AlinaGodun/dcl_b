@@ -58,7 +58,7 @@ def load_cifar(train_path, download=False, for_model=None):
 
 def load_custom_cifar(train_path, download=False, for_model=None, train=True, data_percent=1):
     if for_model == 'SimCLR' or for_model is None:
-        return SimCLRCustomCifar(train_path, download=download, for_model=for_model, train=train, data_percent=data_percent)
+        return SimCLRCustomCifar(train_path, download=download, mode=for_model, train=train, data_percent=data_percent)
     else:
         return RotNetCustomCifar(train_path, download=download, train=train, data_percent=data_percent)
 
