@@ -49,6 +49,7 @@ class AbstractDecModel(nn.Module):
         if not issubclass(model.__class__, AbstractModel):
             raise TypeError(f'Model must inherit class AbstractModel. Model class is {type(model)}')
         self.model = model.to(device)
+        self.model.base_encoder.eval()
 
         if train_loader is not None:
             embedded_data, labels = self.forward_batch(train_loader, device=device)
