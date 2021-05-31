@@ -1,10 +1,10 @@
 import torchvision
 import numpy as np
-from torch.utils.data import Dataset
+from models.abstract_model.dataset import CustomCifar
 from models.simclr.transforms import SimCLRTransforms
 
 
-class CustomCifar(Dataset):
+class SimCLRCIFAR(CustomCifar):
     def __init__(self, train_path, download=False, data_percent=0.4, train=True, with_original=False):
         mode = 'train' if train else 'test'
         model_transforms = {

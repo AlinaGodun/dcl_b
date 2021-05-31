@@ -22,7 +22,7 @@ class AbstractModel(nn.Module):
         pass
 
     @abstractmethod
-    def forward_batch(self, data_loader, device):
+    def forward_batch(self, data_loader, device, flatten=True):
         pass
 
     @abstractmethod
@@ -64,8 +64,8 @@ class AbstractDecModel(nn.Module):
     def forward(self, x):
         return self.model(x)
 
-    def forward_batch(self, data_loader, device):
-        return self.model.forward_batch(data_loader, device)
+    def forward_batch(self, data_loader, device, flatten=True):
+        return self.model.forward_batch(data_loader, device, flatten)
 
     @abstractmethod
     def fit(self, data_loader, epochs, start_lr, device, model_path, weight_decay, gf=False, write_stats=False):

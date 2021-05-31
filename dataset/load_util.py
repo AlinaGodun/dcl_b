@@ -3,7 +3,7 @@ import torch
 
 from dataset.ImageDataset import ImageDataset
 from models.simclr.transforms import SimCLRTransforms
-from models.simclr.custom_cifar import CustomCifar as SimCLRCustomCifar
+from models.simclr.custom_cifar import SimCLRCIFAR as SimCLRCustomCifar
 from models.rotnet.custom_cifar import CustomCifar as RotNetCustomCifar
 
 def load_mnist():

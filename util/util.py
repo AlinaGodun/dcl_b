@@ -124,14 +124,14 @@ def load_model(name, device, cluster_centres=torch.rand(size=(10, 12288))):
     return model
 
 
-def compute_nmi_and_pca(model, name, colors_classes, device, testloader, layer='conv2', flatten=True):
+def compute_nmi_and_pca(model, name, colors_classes, device, testloader, flatten=True):
     if 'pretrained' in name:
         decoder = model
     else:
         decoder = model.model
 
     if 'RotNet' in name:
-        embedded_data, labels = decoder.forward_batch(testloader, device=device, layer=layer, flatten=flatten)
+        embedded_data, labels = decoder.forward_batch(testloader, device=device, flatten=flatten)
     else:
         embedded_data, labels = decoder.forward_batch(testloader, device)
     lable_classes = [colors_classes[l] for l in labels]
