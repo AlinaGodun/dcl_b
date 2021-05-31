@@ -35,15 +35,11 @@ class IDEC(AbstractDecModel):
 
                 base_loss = self.loss(mapped_feats_i, mapped_feats_j)
                 cluster_loss = self.cluster_module.loss_dec_compression(feats)
-<<<<<<< HEAD
-                ## TODO: experiment with degree_of_space_distortion
-                # loss = base_loss + degree_of_space_distortion * cluster_loss
-                loss = cluster_loss
-=======
+
                 print(f'sclr loss: {base_loss}    cluster loss: {cluster_loss}')
+                # TODO: experiment with degree_of_space_distortion
                 loss = base_loss + degree_of_space_distortion * cluster_loss
                 # loss = cluster_loss
->>>>>>> 4c06830361fab10073e6ca19ecd155f6d53e5133
 
                 optimizer.zero_grad()
                 loss.backward()
