@@ -8,40 +8,42 @@ class IDEC(AbstractDecModel):
                  dec_type='IDEC', cluster_centres=torch.rand(size=(10, 2048))):
         super().__init__(train_loader=train_loader, model=model, device=device, n_clusters=n_clusters,
                          dec_type=dec_type, cluster_centres=cluster_centres)
-        self.model = model
-
-        # set SimCLR ResNet to eval mode
-        self.model.base_encoder.eval()
 
     def fit(self, data_loader, epochs, start_lr, device, model_path, weight_decay=1e-6, gf=False, write_stats=True,
             degree_of_space_distortion=0.1, dec_factor=0.1):
         lr = start_lr * dec_factor
-        # optimizer = torch.optim.Adam(self.parameters(), lr=lr, weight_decay=weight_decay)
-        optimizer = torch.optim.SGD(self.parameters(),
-                                    lr=lr,
-                                    momentum=0.9,
-                                    nesterov=True,
-                                    weight_decay=weight_decay)
+        optimizer = torch.optim.Adam(self.parameters(), lr=lr, weight_decay=weight_decay)
+        # optimizer = torch.optim.SGD(self.parameters(),
+        #                             lr=lr,
+        #                             momentum=0.9,
+        #                             nesterov=True,
+        #                             weight_decay=weight_decay)
         i = 0
 
         for epoch in range(epochs):
             for step, ((x, x_i, x_j), _) in enumerate(data_loader):
                 i += 1
                 x = x.to(device)
-                # x_i = x_i.to(device)
-                # x_j = x_j.to(device)
+                x_i = x_i.to(device)
+                x_j = x_j.to(device)
 
                 optimizer.zero_grad()
 
-                # _, mapped_feats_i = self.model(x_i)
-                # _, mapped_feats_j = self.model(x_j)
+                _, mapped_feats_i = self.model(x_i)
+                _, mapped_feats_j = self.model(x_j)
                 feats, _ = self.model(x)
 
-                # base_loss = self.loss(mapped_feats_i, mapped_feats_j)
+                base_loss = self.loss(mapped_feats_i, mapped_feats_j)
                 cluster_loss = self.cluster_module.loss_dec_compression(feats)
+<<<<<<< HEAD
                 ## TODO: experiment with degree_of_space_distortion
                 # loss = base_loss + degree_of_space_distortion * cluster_loss
                 loss = cluster_loss
+=======
+                print(f'sclr loss: {base_loss}    cluster loss: {cluster_loss}')
+                loss = base_loss + degree_of_space_distortion * cluster_loss
+                # loss = cluster_loss
+>>>>>>> 4c06830361fab10073e6ca19ecd155f6d53e5133
 
                 optimizer.zero_grad()
                 loss.backward()
