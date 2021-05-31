@@ -11,6 +11,8 @@ class IDEC(AbstractDecModel):
         super().__init__(model=model, train_loader=train_loader, device=device, dec_type=dec_type,
                          cluster_centres=cluster_centres)
 
+        ## TODO: set model to eval mode everywhere
+
     def fit(self, data_loader, epochs, start_lr, device, model_path, weight_decay=5e-4, gf=False, write_stats=True,
             degree_of_space_distortion=0.1, dec_factor=0.1):
         lr = start_lr * dec_factor
@@ -32,6 +34,7 @@ class IDEC(AbstractDecModel):
                 # classifier_feats = self.model(x)
                 feats = self.model(x, 'conv2').flatten(start_dim=1)
 
+                ## TODO: as with SimCLR, try to use rot aug for clustering prediction
                 # base_loss = self.loss(classifier_feats, labels)
                 cluster_loss = self.cluster_module.loss_dec_compression(feats)
                 # loss = base_loss + degree_of_space_distortion * cluster_loss
