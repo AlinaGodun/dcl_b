@@ -10,13 +10,16 @@ class RotNetTransforms:
         self.rotate = {0: rotate_0, 1: rotate_90, 2: rotate_180, 3: rotate_270}
 
     def __call__(self, x):
-        rotated_xs = [r(x) for _, r in self.rotate.items()]
+        rotated_xs = [self.train_transform(r(x)) for _, r in self.rotate.items()]
         rotated_labels = [label for label, _ in self.rotate.items()]
         return rotated_xs, rotated_labels
 
     def one(self, x):
         return self.train_transform(x)
 
+    def get_tuple(self, x):
+        rotated_xs, _ = self(x)
+        return tuple(rotated_xs)
 
 def rotate_0(x):
     return x

@@ -5,23 +5,24 @@ from models.simclr.transforms import SimCLRTransforms
 
 
 class SimCLRCIFAR(CustomCifar):
-    def __init__(self, train_path, download=False, data_percent=0.4, train=True, with_original=False):
-        mode = 'train' if train else 'test'
+    def __init__(self, train_path, download=False, data_percent=0.4, train=True, with_original=False, transforms=None):
+        if transforms is None:
+            transforms = train
+
         model_transforms = {
-            'train': SimCLRTransforms(with_original=with_original),
-            'test': torchvision.transforms.Compose([torchvision.transforms.ToTensor()])
+            True: SimCLRTransforms(with_original=with_original),
+            False: torchvision.transforms.Compose([torchvision.transforms.ToTensor()])
         }
 
         cifar = torchvision.datasets.CIFAR10(root=train_path, train=train,
-                                             download=download,
-                                             transform=model_transforms[mode])
+                                             download=download)
 
         targets = np.array(cifar.targets)
 
         self.classes = cifar.classes
         self.image_num = int(len(cifar.data) * data_percent)
         self.class_image_num = int(self.image_num / len(self.classes))
-        self.transforms = model_transforms['test'] if not train else model_transforms[mode]
+        self.transforms = model_transforms[transforms]
         self.data = {}
 
         for i in range(len(self.classes)):

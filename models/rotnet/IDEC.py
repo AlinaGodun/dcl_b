@@ -12,39 +12,62 @@ class IDEC(AbstractDecModel):
                          cluster_centres=cluster_centres)
 
     def fit(self, data_loader, epochs, start_lr, device, model_path, weight_decay=5e-4, gf=False, write_stats=True,
-            degree_of_space_distortion=0.1, dec_factor=0.1):
+            degree_of_space_distortion=0.1, dec_factor=0.1, with_aug=True):
         lr = start_lr * dec_factor
         optimizer = torch.optim.SGD(self.parameters(),
                                     lr=lr,
                                     momentum=0.9,
                                     nesterov=True,
                                     weight_decay=weight_decay)
+
         i = 0
-
         for epoch in range(epochs):
-            for step, (x, labels) in enumerate(data_loader):
-                i += 1
-                x = x.to(device)
-                # labels = labels.to(device)
+            if not with_aug:
+                for step, (x, labels) in enumerate(data_loader):
+                    i += 1
+                    x = x.to(device)
 
-                optimizer.zero_grad()
+                    optimizer.zero_grad()
 
-                # classifier_feats = self.model(x)
-                feats = self.model(x, 'conv2').flatten(start_dim=1)
+                    feats = self.model(x, 'conv2').flatten(start_dim=1)
 
-                ## TODO: as with SimCLR, try to use rot aug for clustering prediction
-                # base_loss = self.loss(classifier_feats, labels)
-                cluster_loss = self.cluster_module.loss_dec_compression(feats)
-                # loss = base_loss + degree_of_space_distortion * cluster_loss
-                loss = cluster_loss
+                    ## TODO: as with SimCLR, try to use rot aug for clustering prediction
+                    loss = self.cluster_module.loss_dec_compression(feats)
 
-                optimizer.zero_grad()
-                loss.backward()
-                if gf:
-                    plot_grad_flow(self.named_parameters())
-                optimizer.step()
+                    optimizer.zero_grad()
+                    loss.backward()
+                    if gf:
+                        plot_grad_flow(self.named_parameters())
+                    optimizer.step()
 
-                self.iteration_stats.append(f'{epoch},{i},{loss.item():.4f}')
+                    self.iteration_stats.append(f'{epoch},{i},{loss.item():.4f}')
+            else:
+                for step, ((x, x1, x2, x3), labels) in enumerate(data_loader):
+                    i += 1
+                    x = x.to(device)
+
+                    xs_aug = []
+                    for x_aug in [x1, x2, x3]:
+                        xs_aug.append(x_aug.to(device))
+
+                    optimizer.zero_grad()
+
+                    feats = self.model(x, 'conv2').flatten(start_dim=1)
+
+                    feats_aug = []
+                    for x_aug in xs_aug:
+                        feats_aug.append(self.model(x_aug, 'conv2').flatten(start_dim=1))
+
+                    ## TODO: as with SimCLR, try to use rot aug for clustering prediction
+                    loss = self.cluster_module.loss_dec_compression(feats, feats_aug)
+
+                    optimizer.zero_grad()
+                    loss.backward()
+                    if gf:
+                        plot_grad_flow(self.named_parameters())
+                    optimizer.step()
+
+                    self.iteration_stats.append(f'{epoch},{i},{loss.item():.4f}')
 
             self.epoch_stats.append(f'{epoch},{i},{loss.item():.4f}')
 
@@ -62,3 +85,6 @@ class IDEC(AbstractDecModel):
             iw.close()
 
         return self
+
+
+

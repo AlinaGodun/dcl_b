@@ -18,8 +18,11 @@ class DEC(torch.nn.Module):
         """Hard prediction"""
         return self.prediction(embedded).argmax(1)
 
-    def loss_dec_compression(self, embedded) -> torch.Tensor:
+    def loss_dec_compression(self, embedded, embedded_augs=[]) -> torch.Tensor:
         """Loss of DEC"""
         prediction = dec_prediction(self.centers, embedded, self.alpha)
-        loss = dec_compression_loss_fn(prediction)
+        predictions_aug = []
+        for embedded_aug in embedded_augs:
+            predictions_aug.append(dec_prediction(self.centers, embedded_aug, self.alpha))
+        loss = dec_compression_loss_fn(prediction, predictions_aug)
         return loss
