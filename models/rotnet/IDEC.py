@@ -11,8 +11,6 @@ class IDEC(AbstractDecModel):
         super().__init__(model=model, train_loader=train_loader, device=device, dec_type=dec_type,
                          cluster_centres=cluster_centres)
 
-        ## TODO: set model to eval mode everywhere
-
     def fit(self, data_loader, epochs, start_lr, device, model_path, weight_decay=5e-4, gf=False, write_stats=True,
             degree_of_space_distortion=0.1, dec_factor=0.1):
         lr = start_lr * dec_factor
