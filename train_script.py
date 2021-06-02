@@ -96,13 +96,15 @@ train = True
 # data_percent = args.data_percent
 # data = load_util.load_custom_cifar('./data', download=False, data_percent=data_percent, for_model='RotNet')
 
-clusterdata = load_util.load_custom_cifar('./data', download=False, data_percent=args.data_percent, for_model=None)
+clusterdata = load_util.load_custom_cifar('./data', download=False, data_percent=args.data_percent,
+                                          train=False, transforms=False, for_model='SimCLR')
 clusterloader = torch.utils.data.DataLoader(clusterdata,
                                           batch_size=batch_size,
                                           shuffle=True,
                                           drop_last=True)
 
-traindata = load_util.load_custom_cifar('./data', download=False, data_percent=args.data_percent, for_model='SimCLR')
+traindata = load_util.load_custom_cifar('./data', download=False, data_percent=args.data_percent,
+                                        train=True, transforms=True, for_model='SimCLR')
 
 
 # plot data
