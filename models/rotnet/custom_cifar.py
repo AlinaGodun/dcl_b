@@ -32,7 +32,10 @@ class RotNetCIFAR(Dataset):
                 self.rotated_labels += rotated_labels
 
         self.rotated_labels = np.array(self.rotated_labels)
+        print(len(rotated_data_list))
+        print(rotated_data_list[0].shape)
         rotated_data_list = np.array(rotated_data_list)
+
 
         for i in range(len(self.transforms.rotate.keys())):
             i_mask = self.rotated_labels == i

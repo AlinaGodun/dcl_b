@@ -60,7 +60,7 @@ def load_custom_cifar(train_path, download=False, for_model=None, train=True, da
     if for_model == 'SimCLR' or for_model is None:
         return SimCLRCustomCifar(train_path, download=download, train=train, data_percent=data_percent, transforms=transforms)
     else:
-        return RotNetCustomCifar(train_path, download=download, train=train, data_percent=data_percent, transforms=transforms)
+        return RotNetCustomCifar(train_path, download=download, train=train, data_percent=data_percent)
 
 def process_cifar_data(data):
     data = torch.Tensor(data)
