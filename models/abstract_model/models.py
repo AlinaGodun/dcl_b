@@ -30,7 +30,7 @@ class AbstractModel(nn.Module):
         pass
 
     def init_statistics(self):
-        init_statistics(self.name)
+        return init_statistics(self.name)
 
     def write_statistics(self, writer, stat):
         write_statistics(writer, stat)

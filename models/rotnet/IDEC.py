@@ -12,7 +12,7 @@ class IDEC(AbstractDecModel):
                          cluster_centres=cluster_centres)
 
     def fit(self, data_loader, epochs, start_lr, device, model_path, weight_decay=5e-4, gf=False, write_stats=True,
-            degree_of_space_distortion=0.1, dec_factor=0.1, with_aug=True):
+            degree_of_space_distortion=0.1, dec_factor=0.1, with_aug=False):
         lr = start_lr * dec_factor
         optimizer = torch.optim.SGD(self.parameters(),
                                     lr=lr,
