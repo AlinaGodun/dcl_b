@@ -28,7 +28,8 @@ def dec_compression_loss_fn(q_clean, q_augs=[]):
     ## 5 loss q_aug_p_clean
     ## 6 loss = (loss_q_clean_p_clean + q_aug_p_clean) / n
 
-    p_clean = dec_compression_value(q_clean).detach().data
+    p_clean = dec_compression_value(q_clean).detach()
+    ## take average of p_clean
     loss = get_loss(p_clean, q_clean)
 
     for q_aug in q_augs:
