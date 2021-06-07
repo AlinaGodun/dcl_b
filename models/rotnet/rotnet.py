@@ -4,6 +4,7 @@ import torch.nn as nn
 import torch.nn.functional
 import torch
 import numpy as np
+from sklearn.decomposition import PCA
 
 from models.abstract_model.models import AbstractModel
 from util.gradflow_check import plot_grad_flow
@@ -40,7 +41,7 @@ class RotNet(AbstractModel):
         main_blocks += additional_blocks
 
         main_blocks += [RotNetGlobalAveragePooling()]
-        # main_blocks += [nn.Linear(n_channels[1], num_clusters)]
+        main_blocks += [nn.Linear(n_channels[1], num_clusters)]
         main_blocks += [nn.Linear(num_clusters, num_classes)]
 
         # main_blocks.append(nn.Sequential(OrderedDict([
@@ -50,8 +51,8 @@ class RotNet(AbstractModel):
         # ])))
 
         self.feat_blocks = nn.ModuleList(main_blocks)
-        # self.feat_block_names = [f'conv{s+1}' for s in range(num_blocks)] + ['pooling'] + ['features'] + ['classifier']
-        self.feat_block_names = [f'conv{s + 1}' for s in range(num_blocks)] + ['pooling'] + ['classifier']
+        self.feat_block_names = [f'conv{s+1}' for s in range(num_blocks)] + ['pooling'] + ['features'] + ['classifier']
+        # self.feat_block_names = [f'conv{s + 1}' for s in range(num_blocks)] + ['pooling'] + ['classifier']
 
     def forward(self, x, layer='classifier'):
         if layer not in self.feat_block_names:
@@ -68,12 +69,15 @@ class RotNet(AbstractModel):
     def forward_batch(self, data_loader, device, flatten=True, layer='conv2'):
         embeddings = []
         labels = []
+        pca = PCA(n_components=128)
         for batch, batch_labels in data_loader:
             batch_data = batch.to(device)
             feats = self(batch_data, layer)
 
             if flatten:
                 feats = feats.flatten(start_dim=1)
+                feats = pca.fit_transform(feats.detach().cpu().numpy())
+                feats = torch.from_numpy(feats).to(device)
 
             embeddings.append(feats.detach().cpu())
             labels = labels + batch_labels.tolist()

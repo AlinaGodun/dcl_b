@@ -64,7 +64,7 @@ class AbstractDecModel(nn.Module):
     def forward(self, x):
         return self.model(x)
 
-    def forward_batch(self, data_loader, device, flatten=True):
+    def forward_batch(self, data_loader, device, flatten=True, layer=None):
         return self.model.forward_batch(data_loader, device, flatten)
 
     @abstractmethod

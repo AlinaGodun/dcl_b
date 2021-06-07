@@ -1,5 +1,6 @@
 from models.abstract_model.models import AbstractDecModel
 from models.rotnet.rotnet import RotNet
+from sklearn.decomposition import PCA
 import torch
 
 from util.gradflow_check import plot_grad_flow
@@ -19,6 +20,7 @@ class IDEC(AbstractDecModel):
                                     momentum=0.9,
                                     nesterov=True,
                                     weight_decay=weight_decay)
+        pca = PCA(n_components=128)
 
         i = 0
         for epoch in range(epochs):
@@ -30,8 +32,9 @@ class IDEC(AbstractDecModel):
                     optimizer.zero_grad()
 
                     feats = self.model(x, 'conv2').flatten(start_dim=1)
+                    pca_feats = pca.fit_transform(feats.detach().cpu().numpy())
+                    feats = torch.from_numpy(pca_feats).to(device)
 
-                    ## TODO: as with SimCLR, try to use rot aug for clustering prediction
                     loss = self.cluster_module.loss_dec_compression(feats)
 
                     optimizer.zero_grad()
@@ -58,7 +61,6 @@ class IDEC(AbstractDecModel):
                     for x_aug in xs_aug:
                         feats_aug.append(self.model(x_aug, 'conv2').flatten(start_dim=1))
 
-                    ## TODO: as with SimCLR, try to use rot aug for clustering prediction
                     loss = self.cluster_module.loss_dec_compression(feats, feats_aug)
 
                     optimizer.zero_grad()
