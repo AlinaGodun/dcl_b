@@ -140,5 +140,6 @@ for d in [0.5, 1.0, 1.5]:
     pretrained_model = load_model(f'pretrained_SimCLR_r50_e1000.pth', device=device)
     model = SimClrIDEC(pretrained_model, train_loader=clusterloader, device=device, n_clusters=10)
     model.name = f'{model.name}_d{d}'
+    print(f'training {model.name}')
     train_model(model, batch_size, learning_rate, epochs, traindata, train, device, degree_of_space_distortion=d)
 
