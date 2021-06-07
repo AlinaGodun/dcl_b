@@ -108,10 +108,10 @@ def load_model(name, device, cluster_centres=torch.rand(size=(10, 12288))):
         else:
             resnet_model = 'resnet50'
 
-        if 'pretrained' in name:
+        if 'DEC' not in name:
             model = SimCLR(resnet_model=resnet_model)
         else:
-            if ('c10') in name:
+            if 'c10' in name:
                 model = SimClrIDEC(cluster_centers=torch.rand(size=(10, 2048)))
             elif 'c30' in name:
                 model = SimClrIDEC(cluster_centers=torch.rand(size=(30, 2048)))
