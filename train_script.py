@@ -23,7 +23,7 @@ from models.rotnet.IDEC import IDEC as RotNetIDEC
 from models.simclr.IDEC import IDEC as SimClrIDEC
 
 
-def train_model(model, batch_size, learning_rate, epochs, data, train, device):
+def train_model(model, batch_size, learning_rate, epochs, data, train, device, degree_of_space_distortion=0.1):
     print(f"Training {model.name} started...")
     model.to(device)
 
@@ -44,7 +44,7 @@ def train_model(model, batch_size, learning_rate, epochs, data, train, device):
                                                   shuffle=True,
                                                   drop_last=True)
 
-        model = model.fit(data_loader=trainloader, epochs=epochs, start_lr=learning_rate, device=device, model_path=pretrained_model_path)
+        model = model.fit(data_loader=trainloader, epochs=epochs, start_lr=learning_rate, device=device, model_path=pretrained_model_path, degree_of_space_distortion=degree_of_space_distortion)
         torch.save(model.state_dict(), pretrained_model_path)
     else:
         state_dict = torch.load(pretrained_model_path, map_location=device)
@@ -136,7 +136,8 @@ traindata = load_util.load_custom_cifar('./data', download=False, data_percent=a
 # idec_simclr = IDEC(model, loss, kmeans.cluster_centers_, device)
 # train_model(idec_simclr, batch_size, 0.001, epochs, data, train, device)
 
-pretrained_model = load_model(f'pretrained_SimCLR_r50_e1000.pth', device=device)
-model = SimClrIDEC(pretrained_model, train_loader=clusterloader, device=device, n_clusters=10)
-train_model(model, batch_size, learning_rate, epochs, traindata, train, device)
+for d in [0.5, 1.0, 1.5]:
+    pretrained_model = load_model(f'pretrained_SimCLR_r50_e1000.pth', device=device)
+    model = SimClrIDEC(pretrained_model, train_loader=clusterloader, device=device, n_clusters=10)
+    train_model(model, batch_size, learning_rate, epochs, traindata, train, device, degree_of_space_distortion=d)
 
