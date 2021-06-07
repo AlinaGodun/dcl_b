@@ -40,7 +40,7 @@ class SimCLR(AbstractModel):
         mapped_feats = self.projection_head(feats)
         return feats, mapped_feats
 
-    def forward_batch(self, data_loader, device):
+    def forward_batch(self, data_loader, device, flatten=None):
         embeddings = []
         labels = []
         for batch, batch_labels in data_loader:
