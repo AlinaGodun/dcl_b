@@ -137,9 +137,12 @@ traindata = load_util.load_custom_cifar('./data', download=False, data_percent=a
 # train_model(idec_simclr, batch_size, 0.001, epochs, data, train, device)
 
 for d in [0.5, 1.0, 1.5]:
-    pretrained_model = load_model(f'pretrained_SimCLR_r50_e1000.pth', device=device)
+    name = f'pretrained_SimCLR_r50_e1000.pth' if d is not 0.5 else f'pretrained_IDEC_SimCLR.pth'
+    local_epochs = epochs if d is not 0.5 else 100
+    pretrained_model = load_model(name, device=device)
+    print(f'base: {name}, epochs: {local_epochs}')
     model = SimClrIDEC(pretrained_model, train_loader=clusterloader, device=device, n_clusters=10)
     model.name = f'{model.name}_d{d}'
     print(f'training {model.name}')
-    train_model(model, batch_size, learning_rate, epochs, traindata, train, device, degree_of_space_distortion=d)
+    train_model(model, batch_size, learning_rate, local_epochs, traindata, train, device, degree_of_space_distortion=d)
 
