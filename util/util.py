@@ -112,13 +112,15 @@ def load_model(name, device, cluster_centres=torch.rand(size=(10, 12288))):
             model = SimCLR(resnet_model=resnet_model)
         else:
             if 'c10' in name:
-                model = SimClrIDEC(cluster_centers=torch.rand(size=(10, 2048)))
+                model = SimClrIDEC(cluster_centres=torch.rand(size=(10, 2048)))
             elif 'c30' in name:
-                model = SimClrIDEC(cluster_centers=torch.rand(size=(30, 2048)))
+                model = SimClrIDEC(cluster_centres=torch.rand(size=(30, 2048)))
             else:
                 model = SimClrIDEC()
 
     state_dict = torch.load(f'trained_models/{name}', map_location=device)
+    # print(state_dict.keys())
+    # print(model)
     model.load_state_dict(state_dict)
     model.to(device)
     return model
@@ -149,6 +151,9 @@ def compute_nmi_and_pca(model, name, colors_classes, device, testloader, flatten
 
 def plot_pca_and_nmi(name, axes, nmi, pca, lable_classes):
     axes.set_title(f'{name} Kmeans NMI: {nmi:.4f}')
+    axes.get_xaxis().set_visible(False)
+    axes.get_yaxis().set_visible(False)
+    axes.axis('off')
     sns.scatterplot(ax=axes, x=pca[:,0], y=pca[:,1], hue=lable_classes, s=7, palette='viridis')
 
 
@@ -161,8 +166,9 @@ def plot_class_representation(pca, name, lable_classes):
     for i, c in enumerate(set(lable_classes)):
         ids = np.where(lc == c)[0]
         axes[i].set(title=f'class {c}')
-        axes[i].tick_params(bottom=False, left=False)
-        axes[i].set(xticklabels=[], yticklabels=[])
+        axes[i].get_xaxis().set_visible(False)
+        axes[i].get_yaxis().set_visible(False)
+        axes[i].axis('off')
         sns.scatterplot(ax=axes[i], x=pca[:, 0], y=pca[:, 1], s=7, color='#d1dade')
         sns.scatterplot(ax=axes[i], x=pca[ids, 0], y=pca[ids, 1], s=7, color='#ff802b')
 

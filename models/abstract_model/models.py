@@ -72,7 +72,7 @@ class AbstractDecModel(nn.Module):
         pass
 
     def init_statistics(self):
-        init_statistics(self.name)
+        return init_statistics(self.name)
 
     def write_statistics(self, writer, stat):
         write_statistics(writer, stat)
@@ -80,9 +80,13 @@ class AbstractDecModel(nn.Module):
 
 def init_statistics(name):
     statistics_path = f'statistics/{name}/'
-    ew = open(f'{statistics_path}epoch_stat.csv', 'w')
-    iw = open(f'{statistics_path}iteration_stat.csv', 'w')
-    return ew, iw
+    epoch_stat = f'{statistics_path}epoch_stat.csv', 'w'
+    it_stat = f'{statistics_path}iteration_stat.csv', 'w'
+    return epoch_stat, it_stat
+
+    # ew = open(f'{statistics_path}epoch_stat.csv', 'w')
+    # iw = open(f'{statistics_path}iteration_stat.csv', 'w')
+    # return ew, iw
 
 
 def write_statistics(writer, stat_list):

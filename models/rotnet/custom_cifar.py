@@ -28,14 +28,12 @@ class RotNetCIFAR(Dataset):
 
             for d in data:
                 rotated_d, rotated_labels = self.transforms(d)
+                # TODO: rotated_d is a list, add a label as the last point
                 rotated_data_list += rotated_d
                 self.rotated_labels += rotated_labels
 
         self.rotated_labels = np.array(self.rotated_labels)
-        print(len(rotated_data_list))
-        print(rotated_data_list[0].shape)
         rotated_data_list = np.array(rotated_data_list)
-
 
         for i in range(len(self.transforms.rotate.keys())):
             i_mask = self.rotated_labels == i
@@ -47,7 +45,7 @@ class RotNetCIFAR(Dataset):
     def __getitem__(self, idx):
         class_id = idx // self.rotation_class_image_num
         img_id = idx - class_id * self.rotation_class_image_num
-        return self.rotated_data[class_id][img_id], class_id
+        return self.transforms.to_tensor_transform(self.rotated_data[class_id][img_id]), class_id
 
     def get_class(self, idx):
         class_id = idx // self.rotation_class_image_num

@@ -7,7 +7,7 @@ from util.gradflow_check import plot_grad_flow
 
 
 class IDEC(AbstractDecModel):
-    def __init__(self, model=RotNet(num_classes=4, num_blocks=4), train_loader=None, device='cpu', dec_type='DEC',
+    def __init__(self, model=RotNet(num_classes=4, num_blocks=3), train_loader=None, device='cpu', dec_type='DEC',
                  cluster_centres=torch.rand(size=(4, 12288))):
         super().__init__(model=model, train_loader=train_loader, device=device, dec_type=dec_type,
                          cluster_centres=cluster_centres)
@@ -20,7 +20,7 @@ class IDEC(AbstractDecModel):
                                     momentum=0.9,
                                     nesterov=True,
                                     weight_decay=weight_decay)
-        pca = PCA(n_components=128)
+        # pca = PCA(n_components=512)
 
         i = 0
         for epoch in range(epochs):
@@ -32,8 +32,8 @@ class IDEC(AbstractDecModel):
                     optimizer.zero_grad()
 
                     feats = self.model(x, 'conv2').flatten(start_dim=1)
-                    pca_feats = pca.fit_transform(feats.detach().cpu().numpy())
-                    feats = torch.from_numpy(pca_feats).to(device)
+                    # pca_feats = pca.fit_transform(feats.detach().cpu().numpy())
+                    # feats = torch.from_numpy(pca_feats).to(device)
 
                     loss = self.cluster_module.loss_dec_compression(feats)
 
@@ -80,7 +80,9 @@ class IDEC(AbstractDecModel):
                     torch.save(self.state_dict(), model_path)
 
         if write_stats:
-            ew, iw = self.init_statistics()
+            ew_path, iw_path = self.init_statistics()
+            ew = open(ew_path)
+            iw = open(iw_path)
             self.write_statistics(ew, self.epoch_stats)
             self.write_statistics(iw, self.iteration_stats)
             ew.close()

@@ -47,7 +47,7 @@ class RotNet(AbstractModel):
         # main_blocks.append(nn.Sequential(OrderedDict([
         #     ('GlobalAveragePooling', RotNetGlobalAveragePooling()),
         #     ('Features', nn.Linear(num_channels[1], num_clusters)),
-        #     ('Classifier', nn.Linear(num_clusters, num_classes))
+        #     ('Classifier', nn.Linear(n_channels[1], num_classes))
         # ])))
 
         self.feat_blocks = nn.ModuleList(main_blocks)
@@ -69,15 +69,15 @@ class RotNet(AbstractModel):
     def forward_batch(self, data_loader, device, flatten=True, layer='conv2'):
         embeddings = []
         labels = []
-        pca = PCA(n_components=128)
+        # pca = PCA(n_components=512)
         for batch, batch_labels in data_loader:
             batch_data = batch.to(device)
             feats = self(batch_data, layer)
 
             if flatten:
                 feats = feats.flatten(start_dim=1)
-                feats = pca.fit_transform(feats.detach().cpu().numpy())
-                feats = torch.from_numpy(feats).to(device)
+                # feats = pca.fit_transform(feats.detach().cpu().numpy())
+                # feats = torch.from_numpy(feats).to(device)
 
             embeddings.append(feats.detach().cpu())
             labels = labels + batch_labels.tolist()
