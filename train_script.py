@@ -97,7 +97,7 @@ train = True
 # data = load_util.load_custom_cifar('./data', download=False, data_percent=data_percent, for_model='RotNet')
 
 clusterdata = load_util.load_custom_cifar('./data', download=False, data_percent=args.data_percent,
-                                          train=False, transforms=False, for_model='SimCLR')
+                                          train=True, transforms=False, for_model='SimCLR')
 clusterloader = torch.utils.data.DataLoader(clusterdata,
                                           batch_size=batch_size,
                                           shuffle=True,
@@ -136,13 +136,11 @@ traindata = load_util.load_custom_cifar('./data', download=False, data_percent=a
 # idec_simclr = IDEC(model, loss, kmeans.cluster_centers_, device)
 # train_model(idec_simclr, batch_size, 0.001, epochs, data, train, device)
 
-for d in [0.5, 1.0, 1.5]:
-    name = f'pretrained_SimCLR_r50_e1000.pth' if d != 0.5 else f'pretrained_IDEC_SimCLR.pth'
-    local_epochs = epochs if d != 0.5 else 100
-    pretrained_model = load_model(name, device=device)
-    model = SimClrIDEC(pretrained_model, train_loader=clusterloader, device=device, n_clusters=10)
-    model.name = f'{model.name}_d{d}'
-    print(f'training {model.name}')
-    print(f'base: {name}, epochs: {local_epochs}')
-    train_model(model, batch_size, learning_rate, local_epochs, traindata, train, device, degree_of_space_distortion=d)
+name = f'pretrained_SimCLR_r50_e1000.pth'
+pretrained_model = load_model(name, device=device)
+model = SimClrIDEC(pretrained_model, train_loader=clusterloader, device=device, n_clusters=10)
+model.name = f'{model.name}_aug_e{epochs}'
+print(f'training {model.name}')
+print(f'base: {name}, epochs: {epochs}')
+train_model(model, batch_size, learning_rate, epochs, traindata, train, device)
 
