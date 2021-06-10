@@ -10,7 +10,7 @@ class IDEC(AbstractDecModel):
                          dec_type=dec_type, cluster_centres=cluster_centres)
 
     def fit(self, data_loader, epochs, start_lr, device, model_path, weight_decay=1e-6, gf=False, write_stats=True,
-            degree_of_space_distortion=0.1, dec_factor=0.1):
+            degree_of_space_distortion=0.1, dec_factor=0.1, with_aug=True):
         lr = start_lr * dec_factor
         optimizer = torch.optim.Adam(self.parameters(), lr=lr, weight_decay=weight_decay)
         # optimizer = torch.optim.SGD(self.parameters(),
@@ -29,12 +29,20 @@ class IDEC(AbstractDecModel):
 
                 optimizer.zero_grad()
 
-                _, mapped_feats_i = self.model(x_i)
-                _, mapped_feats_j = self.model(x_j)
-                feats, _ = self.model(x)
+                if with_aug:
+                    feats_i, mapped_feats_i = self.model(x_i)
+                    feats_j, mapped_feats_j = self.model(x_j)
+                    feats, _ = self.model(x)
 
-                base_loss = self.loss(mapped_feats_i, mapped_feats_j)
-                cluster_loss = self.cluster_module.loss_dec_compression(feats)
+                    base_loss = self.loss(mapped_feats_i, mapped_feats_j)
+                    cluster_loss = self.cluster_module.loss_dec_compression(feats, [feats_i, feats_j])
+                else:
+                    _, mapped_feats_i = self.model(x_i)
+                    _, mapped_feats_j = self.model(x_j)
+                    feats, _ = self.model(x)
+
+                    base_loss = self.loss(mapped_feats_i, mapped_feats_j)
+                    cluster_loss = self.cluster_module.loss_dec_compression(feats)
 
                 # TODO: experiment with degree_of_space_distortion
                 loss = base_loss + degree_of_space_distortion * cluster_loss
