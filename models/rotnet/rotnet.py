@@ -41,8 +41,9 @@ class RotNet(AbstractModel):
         main_blocks += additional_blocks
 
         main_blocks += [RotNetGlobalAveragePooling()]
-        main_blocks += [nn.Linear(n_channels[1], num_clusters)]
-        main_blocks += [nn.Linear(num_clusters, num_classes)]
+        # main_blocks += [nn.Linear(n_channels[1], num_clusters)]
+        # main_blocks += [nn.Linear(num_clusters, num_classes)]
+        main_blocks += [nn.Linear(n_channels[1], num_classes)]
 
         # main_blocks.append(nn.Sequential(OrderedDict([
         #     ('GlobalAveragePooling', RotNetGlobalAveragePooling()),
@@ -51,8 +52,8 @@ class RotNet(AbstractModel):
         # ])))
 
         self.feat_blocks = nn.ModuleList(main_blocks)
-        self.feat_block_names = [f'conv{s+1}' for s in range(num_blocks)] + ['pooling'] + ['features'] + ['classifier']
-        # self.feat_block_names = [f'conv{s + 1}' for s in range(num_blocks)] + ['pooling'] + ['classifier']
+        # self.feat_block_names = [f'conv{s+1}' for s in range(num_blocks)] + ['pooling'] + ['features'] + ['classifier']
+        self.feat_block_names = [f'conv{s + 1}' for s in range(num_blocks)] + ['pooling'] + ['classifier']
 
     def forward(self, x, layer='classifier'):
         if layer not in self.feat_block_names:
@@ -99,7 +100,7 @@ class RotNet(AbstractModel):
                 labels = labels.to(device)
 
                 optimizer.zero_grad()
-
+                
                 feats = self(x)
                 loss = self.loss(feats, labels)
 
@@ -108,7 +109,7 @@ class RotNet(AbstractModel):
                     plot_grad_flow(self.named_parameters())
                 optimizer.step()
 
-                self.iteration_stat.append(f'{epoch},{i},{loss.item():.4f}')
+                self.iteration_stats.append(f'{epoch},{i},{loss.item():.4f}')
             self.epoch_stats.append(f'{epoch},{i},{loss.item():.4f}')
             scheduler.step()
 

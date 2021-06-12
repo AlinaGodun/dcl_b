@@ -1,11 +1,12 @@
 import torchvision
 import numpy as np
+import torch
 from torch.utils.data import Dataset
 from models.rotnet.transforms import RotNetTransforms
 
 
 class RotNetSTL10(Dataset):
-    def __init__(self, train_path='./data', download=True, data_percent=0.4, train=True):
+    def __init__(self, train_path='./data', download=False, data_percent=0.4, train=True):
         self.transforms = RotNetTransforms()
 
         stl10 = torchvision.datasets.STL10(train_path, download=download, split='unlabeled')
@@ -19,7 +20,10 @@ class RotNetSTL10(Dataset):
 
         rotated_data_list = []
 
-        data = np.transpose(stl10.data, (0, 2, 3, 1))
+        data = stl10.data[:self.rotation_class_image_num, :]
+        data = self.transforms.resize(torch.from_numpy(data)).numpy()
+        data = np.transpose(data, (0, 2, 3, 1))
+
         for d in data:
             rotated_d, rotated_labels = self.transforms(d)
             rotated_data_list += rotated_d

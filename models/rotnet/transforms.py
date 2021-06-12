@@ -5,6 +5,7 @@ import torchvision
 class RotNetTransforms:
     def __init__(self):
         self.to_tensor_transform = torchvision.transforms.ToTensor()
+        self.resize = torchvision.transforms.Resize(32)
         self.rotate = {0: rotate_0, 1: rotate_90, 2: rotate_180, 3: rotate_270}
 
     def __call__(self, x):
@@ -14,6 +15,9 @@ class RotNetTransforms:
 
     def to_tensor(self, x):
         return self.to_tensor_transform(x)
+
+    def resize(self, x):
+        return self.resize(x)
 
     def get_tuple(self, x):
         rotated_xs, _ = self(x)
