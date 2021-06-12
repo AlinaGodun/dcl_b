@@ -24,7 +24,7 @@ from models.simclr.IDEC import IDEC as SimClrIDEC
 from models.rotnet.custom_stl10 import RotNetSTL10
 
 
-def train_model(model, batch_size, learning_rate, epochs, data, train, device, degree_of_space_distortion=0.1):
+def train_model(model, batch_size, learning_rate, epochs, data, train, device, degree_of_space_distortion=None):
     print(f"Training {model.name} started...")
     model.to(device)
 
@@ -45,7 +45,12 @@ def train_model(model, batch_size, learning_rate, epochs, data, train, device, d
                                                   shuffle=True,
                                                   drop_last=True)
 
-        model = model.fit(data_loader=trainloader, epochs=epochs, start_lr=learning_rate, device=device, model_path=pretrained_model_path, degree_of_space_distortion=degree_of_space_distortion)
+        if degree_of_space_distortion is None:
+            model = model.fit(data_loader=trainloader, epochs=epochs, start_lr=learning_rate, device=device,
+                              model_path=pretrained_model_path)
+        else:
+            model = model.fit(data_loader=trainloader, epochs=epochs, start_lr=learning_rate, device=device,
+                              model_path=pretrained_model_path, degree_of_space_distortion=degree_of_space_distortion)
         torch.save(model.state_dict(), pretrained_model_path)
     else:
         state_dict = torch.load(pretrained_model_path, map_location=device)

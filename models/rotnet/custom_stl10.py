@@ -5,7 +5,7 @@ from models.rotnet.transforms import RotNetTransforms
 
 
 class RotNetSTL10(Dataset):
-    def __init__(self, train_path='./data', download=False, data_percent=0.4, train=True):
+    def __init__(self, train_path='./data', download=True, data_percent=0.4, train=True):
         self.transforms = RotNetTransforms()
 
         stl10 = torchvision.datasets.STL10(train_path, download=download, split='unlabeled')
