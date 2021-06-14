@@ -117,9 +117,9 @@ train = True
 # train_model(model, batch_size, learning_rate, epochs, traindata, train, device)
 
 for i in range(10):
-    # data = load_util.load_custom_cifar('./data', download=False, data_percent=args.data_percent,
-    #                                          train=True, transforms=True, for_model='SimCLR')
+    data = load_util.load_custom_cifar('./data', download=False, data_percent=args.data_percent,
+                                             train=True, transforms=True, for_model='SimCLR')
     model = SimCLR()
     model.name = f'{model.name}_{i}'
     print(model.name)
-    # train_model(model, 128, 0.1, epochs, data, train, device)
+    train_model(model, 128, 0.1, epochs, data, train, device)
