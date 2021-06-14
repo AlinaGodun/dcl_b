@@ -100,7 +100,7 @@ class RotNet(AbstractModel):
                 labels = labels.to(device)
 
                 optimizer.zero_grad()
-                
+
                 feats = self(x)
                 loss = self.loss(feats, labels)
 
