@@ -122,4 +122,4 @@ for i in range(10):
     model = SimCLR()
     model.name = f'{model.name}_{i}'
     print(model.name)
-    train_model(model, 128, 0.1, epochs, data, train, device)
+    train_model(model, batch_size, learning_rate, epochs, data, train, device)
