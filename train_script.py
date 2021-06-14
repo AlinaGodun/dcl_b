@@ -116,9 +116,10 @@ train = True
 # print(f'base: {name}, epochs: {epochs}')
 # train_model(model, batch_size, learning_rate, epochs, traindata, train, device)
 
-# custom_stl10 = RotNetSTL10()
-custom_stl10 = load_util.load_custom_cifar('./data', download=False, data_percent=args.data_percent,
-                                         train=True, transforms=True, for_model='RotNet')
-model = RotNet(num_classes=4)
-model.name = f'{model.name}_STL10'
-train_model(model, 128, 0.1, epochs, custom_stl10, train, device)
+for i in range(10):
+    # data = load_util.load_custom_cifar('./data', download=False, data_percent=args.data_percent,
+    #                                          train=True, transforms=True, for_model='SimCLR')
+    model = SimCLR()
+    model.name = f'{model.name}_{i}'
+    print(model.name)
+    # train_model(model, 128, 0.1, epochs, data, train, device)
