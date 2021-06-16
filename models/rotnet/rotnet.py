@@ -11,7 +11,7 @@ from util.gradflow_check import plot_grad_flow
 
 
 class RotNet(AbstractModel):
-    def __init__(self, num_classes, in_channels=3, num_blocks=3, num_clusters=10):
+    def __init__(self, num_classes, in_channels=3, num_blocks=5, num_clusters=10):
         super().__init__(name='RotNet', loss=nn.CrossEntropyLoss())
 
         n_channels = {1: 192, 2: 160, 3: 96}
@@ -40,16 +40,16 @@ class RotNet(AbstractModel):
 
         main_blocks += additional_blocks
 
-        main_blocks += [RotNetGlobalAveragePooling()]
+        # main_blocks += [RotNetGlobalAveragePooling()]
         # main_blocks += [nn.Linear(n_channels[1], num_clusters)]
         # main_blocks += [nn.Linear(num_clusters, num_classes)]
-        main_blocks += [nn.Linear(n_channels[1], num_classes)]
+        # main_blocks += [nn.Linear(n_channels[1], num_classes)]
 
-        # main_blocks.append(nn.Sequential(OrderedDict([
-        #     ('GlobalAveragePooling', RotNetGlobalAveragePooling()),
-        #     ('Features', nn.Linear(num_channels[1], num_clusters)),
-        #     ('Classifier', nn.Linear(n_channels[1], num_classes))
-        # ])))
+        main_blocks.append(nn.Sequential(OrderedDict([
+            ('GlobalAveragePooling', RotNetGlobalAveragePooling()),
+            # ('Features', nn.Linear(num_channels[1], num_clusters)),
+            ('Classifier', nn.Linear(n_channels[1], num_classes))
+        ])))
 
         self.feat_blocks = nn.ModuleList(main_blocks)
         # self.feat_block_names = [f'conv{s+1}' for s in range(num_blocks)] + ['pooling'] + ['features'] + ['classifier']
@@ -70,15 +70,13 @@ class RotNet(AbstractModel):
     def forward_batch(self, data_loader, device, flatten=True, layer='conv2'):
         embeddings = []
         labels = []
-        # pca = PCA(n_components=512)
+
         for batch, batch_labels in data_loader:
             batch_data = batch.to(device)
             feats = self(batch_data, layer)
 
             if flatten:
                 feats = feats.flatten(start_dim=1)
-                # feats = pca.fit_transform(feats.detach().cpu().numpy())
-                # feats = torch.from_numpy(feats).to(device)
 
             embeddings.append(feats.detach().cpu())
             labels = labels + batch_labels.tolist()
