@@ -1,4 +1,5 @@
 import torchvision
+import torch
 import numpy as np
 from torch.utils.data import Dataset
 from models.rotnet.transforms import RotNetTransforms
@@ -87,3 +88,5 @@ class RotNetCIFARChanged(Dataset):
     def get_class(self, idx):
         class_id = idx // self.class_image_num
         return self.classes[class_id]
+
+

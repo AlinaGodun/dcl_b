@@ -27,67 +27,38 @@ class IDEC(AbstractDecModel):
         # to track the validation loss as the model trains
         valid_losses = []
 
-        print('hello')
-
         early_stopping = EarlyStopping(patience=10, verbose=True, path=model_path)
 
         i = 0
         for epoch in range(epochs):
-            if not with_aug:
-                for step, (x, labels) in enumerate(data_loader):
-                    i += 1
-                    x = x.to(device)
+            for step, (x, labels) in enumerate(data_loader):
+                i += 1
+                x = x.to(device)
 
-                    optimizer.zero_grad()
+                optimizer.zero_grad()
 
-                    feats = self.model(x, 'conv2').flatten(start_dim=1)
+                feats = self.model(x, 'conv2').flatten(start_dim=1)
 
-                    loss = self.cluster_module.loss_dec_compression(feats)
+                loss = self.cluster_module.loss_dec_compression(feats)
 
-                    optimizer.zero_grad()
-                    loss.backward()
+                optimizer.zero_grad()
+                loss.backward()
 
-                    if gf:
-                        plot_grad_flow(self.named_parameters())
+                if gf:
+                    plot_grad_flow(self.named_parameters())
 
-                    optimizer.step()
+                optimizer.step()
 
-                    # train_losses.append(loss)
-                    self.iteration_stats.append(f'{epoch},{i},{loss.item():.4f}')
-            else:
-                for step, ((x, x1, x2, x3), labels) in enumerate(data_loader):
-                    i += 1
-                    x = x.to(device)
+                train_losses.append(loss.item())
+                self.iteration_stats.append(f'{epoch},{i},{loss.item():.4f}')
 
-                    xs_aug = []
-                    for x_aug in [x1, x2, x3]:
-                        xs_aug.append(x_aug.to(device))
-
-                    optimizer.zero_grad()
-
-                    feats = self.model(x, 'conv2').flatten(start_dim=1)
-
-                    feats_aug = []
-                    for x_aug in xs_aug:
-                        feats_aug.append(self.model(x_aug, 'conv2').flatten(start_dim=1))
-
-                    loss = self.cluster_module.loss_dec_compression(feats, feats_aug)
-
-                    optimizer.zero_grad()
-                    loss.backward()
-                    if gf:
-                        plot_grad_flow(self.named_parameters())
-                    optimizer.step()
-
-                    self.iteration_stats.append(f'{epoch},{i},{loss.item():.4f}')
-
-            print('trained, starting eval...')
-            # if eval_data_loader is not None:
-            #     for x, labels in eval_data_loader:
-            #         x = x.to(device)
-            #         feats = self.model(x, 'conv2').flatten(start_dim=1)
-            #         loss = self.cluster_module.loss_dec_compression(feats)
-            #         valid_losses.append(loss)
+            if eval_data_loader is not None:
+                with torch.no_grad():
+                    for x, labels in eval_data_loader:
+                        x = x.to(device)
+                        feats = self.model(x, 'conv2').flatten(start_dim=1)
+                        loss = self.cluster_module.loss_dec_compression(feats)
+                        valid_losses.append(loss.item())
 
             self.epoch_stats.append(f'{epoch},{i},{loss.item():.4f}')
 
