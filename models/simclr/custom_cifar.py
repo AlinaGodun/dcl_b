@@ -5,7 +5,7 @@ from models.simclr.transforms import SimCLRTransforms
 
 
 class SimCLRCIFAR(CustomCifar):
-    def __init__(self, train_path, download=False, data_percent=0.4, train=True, with_original=False, transforms=None):
+    def __init__(self, train_path, download=False, data_percent=0.4, train=True, with_original=True, transforms=None):
         if transforms is None:
             transforms = train
 

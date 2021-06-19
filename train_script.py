@@ -85,7 +85,8 @@ print(f"torchvision: {torchvision.__version__}")
 print(f"numpy: {np.__version__}",)
 print(f"scikit-learn: {sklearn.__version__}")
 
-device = detect_device()
+# device = detect_device()
+device = torch.device('cuda:1')
 print("Using device: ", device)
 
 # specify learning params
@@ -116,10 +117,17 @@ train = True
 # print(f'base: {name}, epochs: {epochs}')
 # train_model(model, batch_size, learning_rate, epochs, traindata, train, device)
 
-for i in range(10):
+for i in [0, 1, 3, 4, 5, 6, 7, 8]:
     data = load_util.load_custom_cifar('./data', download=False, data_percent=args.data_percent,
                                              train=True, transforms=True, for_model='SimCLR')
-    model = SimCLR()
-    model.name = f'{model.name}_{i}'
-    print(model.name)
-    train_model(model, batch_size, learning_rate, epochs, data, train, device)
+    clusterdata = load_util.load_custom_cifar('./data', download=False, data_percent=args.data_percent,
+                                             train=True, transforms=False, for_model='SimCLR')
+    clusterloader = torch.utils.data.DataLoader(clusterdata,
+                                                  batch_size=batch_size,
+                                                  shuffle=True,
+                                                  drop_last=True)
+    model = load_model('pretrained_SimCLR_{i}.pth', device)
+    idec_model = SimClrIDEC(model, clusterloader, device)
+    idec_model.name = f'{idec_model.name}_{i}'
+    print(idec_model.name)
+    train_model(idec_model, batch_size, learning_rate, epochs, data, train, device)
