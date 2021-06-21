@@ -26,7 +26,7 @@ from models.rotnet.custom_stl10 import RotNetSTL10
 
 def train_model(model, batch_size, learning_rate, epochs, data, train, device, degree_of_space_distortion=None):
     print(f"Training {model.name} started...")
-    model.to(device)
+    model = model.to(device)
 
     # paths to save/load models from
     base_path = "trained_models"
@@ -117,15 +117,13 @@ train = True
 # print(f'base: {name}, epochs: {epochs}')
 # train_model(model, batch_size, learning_rate, epochs, traindata, train, device)
 
-for i in range(10):
-    data = load_util.load_custom_cifar('./data', download=False, data_percent=args.data_percent,
-                                             train=True, transforms=True, for_model='SimCLR')
-    clusterdata = load_util.load_custom_cifar('./data', download=False, data_percent=args.data_percent,
-                                             train=True, transforms=False, for_model='SimCLR')
-    clusterloader = torch.utils.data.DataLoader(clusterdata,
-                                                  batch_size=batch_size,
-                                                  shuffle=True,
-                                                  drop_last=True)
+stl10 = SimCLRSTL10(download=False, data_percent=1.0, with_original=False)
+dataloader = torch.utils.data.DataLoader(stl10,
+                                         batch_size=128,
+                                         shuffle=True,
+                                         drop_last=True)
+
+for i in range(5,10):
     model = SimCLR()
     model.name = f'{model.name}_STL10_{i}'
     print(model.name)
