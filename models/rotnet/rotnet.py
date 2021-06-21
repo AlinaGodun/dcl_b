@@ -54,6 +54,7 @@ class RotNet(AbstractModel):
         self.feat_blocks = nn.ModuleList(main_blocks)
         # self.feat_block_names = [f'conv{s+1}' for s in range(num_blocks)] + ['pooling'] + ['features'] + ['classifier']
         self.feat_block_names = [f'conv{s + 1}' for s in range(num_blocks)] + ['pooling'] + ['classifier']
+        self.feat_block_names = [f'conv{s + 1}' for s in range(num_blocks)] + ['classifier']
 
     def forward(self, x, layer='classifier'):
         if layer not in self.feat_block_names:
@@ -116,13 +117,6 @@ class RotNet(AbstractModel):
                       f"LR: {optimizer.param_groups[0]['lr']}")
                 if model_path is not None:
                     torch.save(self.state_dict(), model_path)
-
-        if write_stats:
-            ew, iw = self.init_statistics()
-            self.write_statistics(ew, self.epoch_stats)
-            self.write_statistics(iw, self.iteration_stats)
-            ew.close()
-            iw.close()
 
         return self
 
