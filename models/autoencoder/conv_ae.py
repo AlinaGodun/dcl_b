@@ -127,7 +127,7 @@ class ConvAE(nn.Module):
         self.down1 = Down(128, 256)
         self.down2 = Down(256, 512)
         factor = 1
-        self.down3 = Down(512, 1024// factor)
+        self.down3 = Down(512, 1024 // factor)
         enc_dim = 1024 * 4 * 4
         self.flatten = Flatten()
         self.encoder = nn.Sequential(
