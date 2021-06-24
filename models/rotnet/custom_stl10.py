@@ -9,7 +9,8 @@ class RotNetSTL10(Dataset):
     def __init__(self, train_path='./data', download=False, data_percent=0.4, train=True):
         self.transforms = RotNetTransforms()
 
-        stl10 = torchvision.datasets.STL10(train_path, download=download, split='unlabeled')
+        split = 'unlabeled' if train is True else 'train'
+        stl10 = torchvision.datasets.STL10(train_path, download=download, split=split)
 
         self.rotation_num = 4
         self.rotation_image_num = int(len(stl10.data) * data_percent) * self.rotation_num

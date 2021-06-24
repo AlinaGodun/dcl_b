@@ -1,47 +1,38 @@
-from sklearn.cluster import KMeans
-from models.dec import DEC
-from util.util import encode_batchwise
-from util.util import evaluate_batchwise
-import torch.nn as nn
+from models.abstract_model.models import AbstractDecModel
+from models.autoencoder.conv_ae import ConvAE
 import torch
-import os
+import numpy as np
+
+from util.pytorchtools import EarlyStopping
 
 
+class IDEC(AbstractDecModel):
+    def __init__(self, model=ConvAE(n_channels=3, n_classes=3), train_loader=None, device='cpu', n_clusters=None,
+                 dec_type='IDEC', cluster_centres=torch.rand(size=(10, 2048))):
+        super().__init__(train_loader=train_loader, model=model, device=device, n_clusters=n_clusters,
+                         dec_type=dec_type, cluster_centres=cluster_centres)
 
-class IDEC(nn.Module):
-    def __init__(self, ae_model, testloader, device):
-        self.device = device
-        self.ae_model = ae_model
-        self.ae_model.name = 'idec' + self.ae_model.name
+    def fit(self, data_loader, epochs, start_lr, device, model_path, weight_decay=1e-6, gf=False, write_stats=True,
+            degree_of_space_distortion=0.1, dec_factor=0.1, with_aug=False, eval_data_loader=None):
+        optimizer = torch.optim.Adam(list(self.model.parameters()) + list(self.cluster_module.parameters()),
+                                     lr=start_lr)
 
-        (embedded_data, labels) = encode_batchwise(testloader, ae_model, device)
-        kmeans = KMeans(n_clusters=len(set(labels)))
-        kmeans.fit(embedded_data)
-        init_centers = kmeans.cluster_centers_
+        early_stopping = EarlyStopping(patience=10, verbose=True, path=model_path)
 
-        self.cluster_module = DEC(init_centers).to(self.device)
-        self.cluster_module.name = 'i' + self.cluster_module.name
+        # to track the training loss as the model trains
+        train_losses = []
+        # to track the validation loss as the model trains
+        valid_losses = []
 
-    def forward(self, x):
-        return self.ae_model(x)
-
-    def train(self, epochs, trainloader, testloader, lr, base_path):
-        degree_of_space_distortion = 0.1
-
-        # Note: We now optimize the autoencoder and the DEC parameters jointly together
-        optimizer = torch.optim.Adam(list(self.ae_model.parameters()) + list(self.cluster_module.parameters()), lr=lr)
-        loss_fn = torch.nn.MSELoss()
-
-        idec_model_path = os.path.join(base_path, self.ae_model.name)
-        idec_path = os.path.join(base_path, self.cluster_module.name)
+        i = 0
 
         for epoch in range(epochs):  # each iteration is equal to an epoch
-            for batch in trainloader:
-                batch_data = batch[0].to(self.device)
-                embedded = self.ae_model.encode(batch_data)
-                reconstruction = self.ae_model.decode(embedded)
+            for batch in data_loader:
+                batch_data = batch[0].to(device)
+                embedded = self.model.encode(batch_data)
+                reconstruction = self.model.decode(embedded)
 
-                ae_loss = loss_fn(batch_data, reconstruction)
+                ae_loss = self.loss(batch_data, reconstruction)
                 cluster_loss = self.cluster_module.loss_dec_compression(embedded)
 
                 # Reconstruction loss is now included
@@ -51,12 +42,38 @@ class IDEC(nn.Module):
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
-                if epoch % 5 == 0:
-                    nmi = evaluate_batchwise(testloader, self.ae_model, self.cluster_module, self.device)
-                    print(f"{epoch}/{epochs} cluster_loss:{cluster_loss.item():.4f} NMI:{nmi:.4f}"
-                          f" ae_loss:{ae_loss.item():.4f} total_loss: {(ae_loss.item() + cluster_loss.item()):.4f}]")
+                train_losses.append(loss.item())
+
+            if eval_data_loader is not None:
+                with torch.no_grad():
+                    for x, labels in eval_data_loader:
+                        x = x.to(device)
+                        embedded = self.model.encode(x)
+                        reconstruction = self.model.decode(embedded)
+
+                        ae_loss = self.loss(x, reconstruction)
+                        cluster_loss = self.cluster_module.loss_dec_compression(embedded)
+                        loss = ae_loss + degree_of_space_distortion * cluster_loss
+
+                        valid_losses.append(loss.item())
+
+            train_loss = np.average(train_losses)
+            valid_loss = np.average(valid_losses)
+            train_losses = []
+            valid_losses = []
+
+            if epoch % 5 == 0:
+                print(f"{self.name}: Epoch {epoch + 1}/{epochs} - Iteration {i} - Train loss:{train_loss:.4f}",
+                      f"Validation loss:{valid_loss:.4f}, LR: {optimizer.param_groups[0]['lr']}")
+                if model_path is not None:
+                    torch.save(self.state_dict(), model_path)
+
+            early_stopping(valid_loss, self)
+
+            if early_stopping.early_stop:
+                break
 
         # save model
-        torch.save(self.ae_model.state_dict(), idec_model_path)
+        torch.save(self.state_dict(), model_path)
         # save IDEC
-        torch.save(self.cluster_module.state_dict(), idec_path)
+        torch.save(self.cluster_module.state_dict(), model_path)

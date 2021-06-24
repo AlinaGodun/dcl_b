@@ -70,8 +70,8 @@ class IDEC(AbstractDecModel):
             if epoch % 5 == 0:
                 print(f"{self.name}: Epoch {epoch + 1}/{epochs} - Iteration {i} - Train loss:{train_loss:.4f}",
                       f"Validation loss:{valid_loss:.4f}, LR: {optimizer.param_groups[0]['lr']}")
-                # if model_path is not None:
-                #     torch.save(self.state_dict(), model_path)
+                if model_path is not None:
+                    torch.save(self.state_dict(), model_path)
 
             early_stopping(valid_loss, self)
 

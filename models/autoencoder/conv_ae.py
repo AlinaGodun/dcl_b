@@ -1,6 +1,9 @@
 # Based on  https://github.com/milesial/Pytorch-UNet
 import torch
 import torch.nn as nn
+import numpy as np
+
+from models.abstract_model.models import AbstractModel
 
 
 def fit(model, trainloader, epochs, start_lr, device, model_path=None, loss_fn=None, weight_decay=1e-5):
@@ -9,8 +12,7 @@ def fit(model, trainloader, epochs, start_lr, device, model_path=None, loss_fn=N
         loss_fn = torch.nn.MSELoss()
     i = 0
     for epoch_i in range(epochs):
-        for batch_data in trainloader:
-            model.fit()
+        for batch_data, _ in trainloader:
             # load batch on device
             batch = batch_data.to(device)
             # reset gradients from last iteration
@@ -117,9 +119,9 @@ class Flatten(nn.Module):
     def forward(self, x): return x.view(-1) if self.full else x.view(x.size(0), -1)
 
 
-class ConvAE(nn.Module):
-    def __init__(self, n_channels, n_classes, embd_sz=128, name="AE"):
-        super(ConvAE, self).__init__()
+class ConvAE(AbstractModel):
+    def __init__(self, n_channels, n_classes, embd_sz=128):
+        super().__init__(name='AE', loss=nn.MSELoss())
         self.n_channels = n_channels
         self.n_classes = n_classes
 
@@ -146,8 +148,6 @@ class ConvAE(nn.Module):
 
         self.outc = OutConv(128, n_classes)
 
-        self.name = name
-
     def encode(self,x):
         e = self.inc(x)
         e = self.down1(e)
@@ -170,9 +170,19 @@ class ConvAE(nn.Module):
         d = self.decode(e)
         return d
 
-    def fit(self, trainloader, epochs, start_lr, device, model_path=None, loss_fn=None, weight_decay=1e-5):
-        fit(model=self,
-            trainloader=trainloader,
+    def forward_batch(self, data_loader, device, flatten=None):
+        embeddings = []
+        labels = []
+        for batch, batch_labels in data_loader:
+            batch_data = batch.to(device)
+            encoding = self.encode(batch_data)
+            embeddings.append(encoding.detach().cpu())
+            labels = labels + batch_labels.tolist()
+        return torch.cat(embeddings, dim=0).numpy(), np.array(labels)
+
+    def fit(self, dataloader, epochs, start_lr, device, model_path=None, loss_fn=None, weight_decay=1e-5):
+        return fit(model=self,
+            trainloader=dataloader,
             epochs=epochs,
             start_lr=start_lr,
             device=device,

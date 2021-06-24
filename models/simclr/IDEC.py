@@ -63,15 +63,4 @@ class IDEC(AbstractDecModel):
                 if model_path is not None:
                     torch.save(self.state_dict(), model_path)
 
-            if epoch == 100:
-                if model_path is not None:
-                    torch.save(self.state_dict(), f'100_{model_path}')
-
-        if write_stats:
-            ew, iw = self.init_statistics()
-            self.write_statistics(ew, self.epoch_stats)
-            self.write_statistics(iw, self.iteration_stats)
-            ew.close()
-            iw.close()
-
         return self

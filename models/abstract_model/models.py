@@ -2,7 +2,7 @@ from abc import abstractmethod, ABC
 
 import torch
 import torch.nn as nn
-from sklearn.cluster import KMeans
+from sklearn.cluster import KMeans, MiniBatchKMeans
 from sklearn.metrics import normalized_mutual_info_score
 
 from models.dec.DEC import DEC
@@ -54,7 +54,7 @@ class AbstractDecModel(nn.Module):
         if train_loader is not None:
             embedded_data, labels = self.forward_batch(train_loader, device=device)
             n_clusters = len(set(labels)) if n_clusters is None else n_clusters
-            kmeans = KMeans(n_clusters=n_clusters)
+            kmeans = MiniBatchKMeans(n_clusters=n_clusters) if len(embedded_data) > 320000 else KMeans(n_clusters=n_clusters)
             kmeans.fit(embedded_data)
             cluster_centres = kmeans.cluster_centers_
             self.start_nmi = normalized_mutual_info_score(labels, kmeans.labels_)
