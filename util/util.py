@@ -146,6 +146,28 @@ def compute_nmi_and_pca(model, name, colors_classes, device, testloader, flatten
 
     return labels, kmeans, nmi, reduced_data, lable_classes
 
+def compute_nmi_and_pca_for_plot(model, name, colors_classes, device, testloader, flatten=True, layer='conv2'):
+    if 'pretrained' in name:
+        decoder = model
+    else:
+        decoder = model.model
+
+    if 'RotNet' in name:
+        embedded_data, labels, aug_labels = decoder.forward_batch(testloader, device=device, flatten=flatten, layer=layer)
+    else:
+        embedded_data, labels, aug_labels = decoder.forward_batch(testloader, device)
+    lable_classes = [colors_classes[l] for l in labels]
+
+    n_clusters = len(set(labels))
+    kmeans = KMeans(n_clusters=n_clusters)
+    kmeans.fit(embedded_data)
+    nmi = normalized_mutual_info_score(labels, kmeans.labels_)
+
+    pca = PCA(n_components=2)
+    reduced_data = pca.fit_transform(embedded_data)
+
+    return labels, aug_labels, kmeans, nmi, reduced_data, lable_classes
+
 
 def plot_pca_and_nmi(name, axes, nmi, pca, lable_classes):
     axes.set_title(f'{name} Kmeans NMI: {nmi:.4f}')
@@ -155,19 +177,56 @@ def plot_pca_and_nmi(name, axes, nmi, pca, lable_classes):
     sns.scatterplot(ax=axes, x=pca[:,0], y=pca[:,1], hue=lable_classes, s=7, palette='viridis')
 
 
-def plot_class_representation(pca, name, lable_classes):
+def plot_class_representation(pca, name, lable_classes, aug_labels):
     print(f'{name} class representation')
     lc = np.array(lable_classes)
-    fig, axes = plt.subplots(2, 5, figsize=(15, 6))
+    fig, axes = plt.subplots(2, 5, figsize=(20, 8))
     axes = axes.flatten()
 
+    s = set(lable_classes)
+
     for i, c in enumerate(set(lable_classes)):
-        ids = np.where(lc == c)[0]
+        class_labels = lc == c
+        originals = aug_labels == 1
+        augmented = aug_labels == 0
+
+        ids_original = np.where(np.logical_and(class_labels, originals))[0]
+        ids_augmented = np.where(np.logical_and(class_labels, augmented))[0]
+
         axes[i].set(title=f'class {c}')
         axes[i].get_xaxis().set_visible(False)
         axes[i].get_yaxis().set_visible(False)
         axes[i].axis('off')
         sns.scatterplot(ax=axes[i], x=pca[:, 0], y=pca[:, 1], s=7, color='#d1dade')
-        sns.scatterplot(ax=axes[i], x=pca[ids, 0], y=pca[ids, 1], s=7, color='#ff802b')
+        sns.scatterplot(ax=axes[i], x=pca[ids_augmented, 0], y=pca[ids_augmented, 1], s=10, alpha=0.5)
+        sns.scatterplot(ax=axes[i], x=pca[ids_original, 0], y=pca[ids_original, 1], s=10, color='#ff802b', alpha=0.5)
+        # sns.scatterplot(ax=axes[i], x=pca[ids_original, 0], y=pca[ids_original, 1], s=10, color='#ff802b', alpha=0.3)
+        # sns.scatterplot(ax=axes[i], x=pca[ids_augmented, 0], y=pca[ids_augmented, 1], s=10, color='#4a51cf', alpha=0.3)
+
+    plt.show()
+
+def plot_class_representation_rotnet(pca, name, lable_classes, aug_labels):
+    print(f'{name} class representation')
+    lc = np.array(lable_classes)
+    fig, axes = plt.subplots(2, 5, figsize=(20, 8))
+    axes = axes.flatten()
+
+    for i, c in enumerate(set(lable_classes)):
+        class_labels = lc == c
+        data_0 = aug_labels == 0
+        data_1 = aug_labels == 1
+        data_2 = aug_labels == 2
+        data_3 = aug_labels == 3
+
+        ids = np.where(class_labels)[0]
+        hue = aug_labels[ids]
+
+        axes[i].set(title=f'class {c}')
+        axes[i].get_xaxis().set_visible(False)
+        axes[i].get_yaxis().set_visible(False)
+        axes[i].axis('off')
+        sns.scatterplot(ax=axes[i], x=pca[:, 0], y=pca[:, 1], s=7, color='#d1dade')
+        sns.scatterplot(ax=axes[i], x=pca[ids, 0], y=pca[ids, 1], s=10, hue=hue,
+                        alpha=0.5, palette='viridis')
 
     plt.show()

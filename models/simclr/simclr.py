@@ -43,12 +43,14 @@ class SimCLR(AbstractModel):
     def forward_batch(self, data_loader, device, flatten=None):
         embeddings = []
         labels = []
+        aug_labels = []
         for batch, batch_labels in data_loader:
             batch_data = batch.to(device)
             feats, _ = self(batch_data)
             embeddings.append(feats.detach().cpu())
-            labels = labels + batch_labels.tolist()
-        return torch.cat(embeddings, dim=0).numpy(), np.array(labels)
+            labels = labels + batch_labels[0].tolist()
+            aug_labels = aug_labels + batch_labels[1].tolist()
+        return torch.cat(embeddings, dim=0).numpy(), np.array(labels), np.array(aug_labels)
 
     def fit(self, data_loader, epochs, start_lr, device, model_path, weight_decay=1e-6, gf=False, write_stats=True):
         optimizer = torch.optim.Adam(self.parameters(), lr=start_lr, weight_decay=weight_decay)

@@ -53,7 +53,7 @@ class RotNet(AbstractModel):
 
         self.feat_blocks = nn.ModuleList(main_blocks)
         # self.feat_block_names = [f'conv{s+1}' for s in range(num_blocks)] + ['pooling'] + ['features'] + ['classifier']
-        self.feat_block_names = [f'conv{s + 1}' for s in range(num_blocks)] + ['pooling'] + ['classifier']
+        # self.feat_block_names = [f'conv{s + 1}' for s in range(num_blocks)] + ['pooling'] + ['classifier']
         self.feat_block_names = [f'conv{s + 1}' for s in range(num_blocks)] + ['classifier']
 
     def forward(self, x, layer='classifier'):
