@@ -10,6 +10,7 @@ import sklearn
 # util functions
 from sklearn.cluster import KMeans
 
+from models.simclr.custom_stl10 import SimCLRSTL10
 from util.util import *
 
 # dataset functions
@@ -118,19 +119,21 @@ train = True
 # train_model(model, batch_size, learning_rate, epochs, traindata, train, device)
 
 stl10 = SimCLRSTL10(download=False, data_percent=1.0, with_original=False)
-dataloader = torch.utils.data.DataLoader(stl10,
-                                         batch_size=128,
+
+cluster_stl10 = SimCLRSTL10(download=False, train=False, data_percent=1.0)
+clusterloader = torch.utils.data.DataLoader(cluster_stl10,
+                                         batch_size=256,
                                          shuffle=True,
                                          drop_last=True)
 
 for i in range(5,10):
-    model = SimCLR()
-    model.name = f'{model.name}_STL10_{i}'
-    print(model.name)
-    train_model(model, batch_size, learning_rate, epochs, data, train, device)
+    # model = SimCLR()
+    # model.name = f'{model.name}_STL10_{i}'
+    # print(model.name)
+    # train_model(model, batch_size, learning_rate, epochs, data, train, device)
 
-    # model = load_model('pretrained_SimCLR_{i}.pth', device)
-    # idec_model = SimClrIDEC(model, clusterloader, device)
-    # idec_model.name = f'{idec_model.name}_{i}'
-    # print(idec_model.name)
-    # train_model(idec_model, batch_size, learning_rate, epochs, data, train, device)
+    model = load_model('pretrained_SimCLR_STL10_{i}.pth', device)
+    idec_model = SimClrIDEC(model, clusterloader, device)
+    idec_model.name = f'{idec_model.name}_{i}'
+    print(idec_model.name)
+    train_model(idec_model, batch_size, learning_rate, epochs, stl10, train, device)
