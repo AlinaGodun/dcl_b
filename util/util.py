@@ -116,7 +116,7 @@ def load_model(name, device, cluster_centres=torch.rand(size=(10, 12288))):
             elif 'c30' in name:
                 model = SimClrIDEC(cluster_centres=torch.rand(size=(30, 2048)))
             else:
-                model = SimClrIDEC()
+                model = SimClrIDEC(cluster_centres=torch.rand(size=(1, 2048)))
 
     state_dict = torch.load(f'trained_models/{name}', map_location=device)
     model.load_state_dict(state_dict)

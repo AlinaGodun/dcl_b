@@ -16,8 +16,12 @@ class SimCLRSTL10(CustomCifar):
         }
         resize = torchvision.transforms.Resize(32)
 
-        stl10 = torchvision.datasets.STL10(train_path, download=download, split='unlabeled')
+        if train:
+            stl10 = torchvision.datasets.STL10(train_path, download=download, split='unlabeled')
+        else:
+            stl10 = torchvision.datasets.STL10(train_path, download=download, split='test')
 
+        self.labels = stl10.labels
         self.classes = set(stl10.labels)
         self.image_num = int(len(stl10.data) * data_percent)
         self.class_image_num = int(self.image_num / len(self.classes))
@@ -32,7 +36,7 @@ class SimCLRSTL10(CustomCifar):
         return self.image_num
 
     def __getitem__(self, idx):
-        return self.transforms(self.data[idx]), -1
+        return self.transforms(self.data[idx]), self.labels[idx]
 
     def get_class(self, idx):
         return -1

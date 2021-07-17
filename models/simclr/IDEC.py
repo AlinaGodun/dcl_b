@@ -4,7 +4,7 @@ import torch
 
 
 class IDEC(AbstractDecModel):
-    def __init__(self, model=SimCLR(resnet_model='resnet50'), train_loader=None, device='cpu', n_clusters=None,
+    def __init__(self, model=SimCLR(resnet_model='resnet50'), train_loader=None, device='cpu', n_clusters=10,
                  dec_type='IDEC', cluster_centres=torch.rand(size=(10, 2048))):
         super().__init__(train_loader=train_loader, model=model, device=device, n_clusters=n_clusters,
                          dec_type=dec_type, cluster_centres=cluster_centres)

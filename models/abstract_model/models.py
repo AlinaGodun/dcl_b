@@ -37,7 +37,7 @@ class AbstractModel(nn.Module):
 
 
 class AbstractDecModel(nn.Module):
-    def __init__(self, model, train_loader=None, device='cpu', n_clusters=None, dec_type='IDEC',
+    def __init__(self, model, train_loader=None, device='cpu', n_clusters=10, dec_type='IDEC',
                  cluster_centres=torch.rand(size=(4, 12288)), epoch_stats=None, it_stats=None):
         super(AbstractDecModel, self).__init__()
         self.name = f'{dec_type}_{model.name}'
