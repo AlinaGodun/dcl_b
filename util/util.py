@@ -190,22 +190,24 @@ def plot_class_representation(pca, name, lable_classes, aug_labels):
     axes = axes.flatten()
 
     normal_points = pca[:-10]
-    centers = pca[-10]
+    centers_coordinates = pca[-10:]
     tree = spatial.KDTree(normal_points)
+    nearest_ids = []
 
     s = set(lable_classes)
     s.remove(-1)
 
     for i, c in enumerate(s):
+        nearest_ids.append(tree.query(centers_coordinates[i], k=5)[1])
+
+    for i, c in enumerate(s):
         class_labels = lc == c
         originals = aug_labels == 1
         augmented = aug_labels == 0
-        centres = aug_labels == -1
+        # centres = aug_labels == -1
 
         ids_original = np.where(np.logical_and(class_labels, originals))[0]
         ids_augmented = np.where(np.logical_and(class_labels, augmented))[0]
-
-        nearest_ids = tree.query(centers[c], k=5)[1]
 
         axes[i].set(title=f'class {c}')
         axes[i].get_xaxis().set_visible(False)
@@ -214,8 +216,13 @@ def plot_class_representation(pca, name, lable_classes, aug_labels):
         sns.scatterplot(ax=axes[i], x=pca[:, 0], y=pca[:, 1], s=7, color='#d1dade')
         sns.scatterplot(ax=axes[i], x=pca[ids_augmented, 0], y=pca[ids_augmented, 1], s=10, alpha=0.5)
         sns.scatterplot(ax=axes[i], x=pca[ids_original, 0], y=pca[ids_original, 1], s=10, color='#ff802b', alpha=0.5)
-        sns.scatterplot(ax=axes[i], x=pca[centres, 0], y=pca[centres, 1], s=10, color='#000000', marker='s')
 
+        for k in range(10):
+            # corr = -0.05
+            # sns.scatterplot(ax=axes[i], x=pca[nearest_ids[k], 0], y=pca[nearest_ids[k], 1], s=50, color='#000000', marker='X')
+            axes[i].annotate(str(k), xy=(pca[nearest_ids[k]][0][0], pca[nearest_ids[k]][0][1]))
+        # sns.scatterplot(ax=axes[i], x=pca[centres, 0], y=pca[centres, 1], s=10, color='#000000', marker='s')
+        # sns.scatterplot(ax=axes[i], x=pca[nearest_ids, 0], y=pca[nearest_ids, 1], s=50, color='#000000', marker='X')
 
 
     plt.show()
@@ -253,6 +260,8 @@ def plot_class_representation_with_centers(pca, name, lable_classes, aug_labels,
         sns.scatterplot(ax=axes[i], x=pca[ids_original, 0], y=pca[ids_original, 1], s=10, color='red',
                         alpha=0.5)
         sns.scatterplot(ax=axes[i], x=pca[ids_original, 0], y=pca[ids_original, 1], s=10, color='red',
+                        alpha=0.5)
+        sns.scatterplot(ax=axes[i], x=pca[nearest_ids, 0], y=pca[nearest_ids, 1], s=10, color='red',
                         alpha=0.5)
 
     plt.show()
