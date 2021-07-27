@@ -218,14 +218,14 @@ def plot_class_representation(pca, name, lable_classes, aug_labels):
         sns.scatterplot(ax=axes[i], x=pca[ids_original, 0], y=pca[ids_original, 1], s=10, color='#ff802b', alpha=0.5)
 
         for k in range(10):
-            # corr = -0.05
             # sns.scatterplot(ax=axes[i], x=pca[nearest_ids[k], 0], y=pca[nearest_ids[k], 1], s=50, color='#000000', marker='X')
             axes[i].annotate(str(k), xy=(pca[nearest_ids[k]][0][0], pca[nearest_ids[k]][0][1]))
         # sns.scatterplot(ax=axes[i], x=pca[centres, 0], y=pca[centres, 1], s=10, color='#000000', marker='s')
         # sns.scatterplot(ax=axes[i], x=pca[nearest_ids, 0], y=pca[nearest_ids, 1], s=50, color='#000000', marker='X')
 
-
     plt.show()
+
+    return nearest_ids
 
 def plot_class_representation_with_centers(pca, name, lable_classes, aug_labels, centers):
     print(f'{name} class representation')
