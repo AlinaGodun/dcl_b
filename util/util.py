@@ -13,6 +13,7 @@ from models.rotnet.IDEC import IDEC as RotNetIDEC
 from models.rotnet.rotnet import RotNet
 from models.simclr.simclr import SimCLR
 import seaborn as sns
+from scipy import spatial
 
 
 def denormalize(tensor: torch.Tensor, mean: float = 0.1307, std: float = 0.3081) -> torch.Tensor:
@@ -163,6 +164,11 @@ def compute_nmi_and_pca_for_plot(model, name, colors_classes, device, testloader
     kmeans.fit(embedded_data)
     nmi = normalized_mutual_info_score(labels, kmeans.labels_)
 
+    embedded_data = np.concatenate((embedded_data, kmeans.cluster_centers_))
+    labels = np.concatenate((labels, np.array(list(range(0, 10)))))
+    aug_labels = np.concatenate((aug_labels, np.array([-1] * 10)))
+    lable_classes += [-1] * 10
+
     pca = PCA(n_components=2)
     reduced_data = pca.fit_transform(embedded_data)
 
@@ -183,12 +189,55 @@ def plot_class_representation(pca, name, lable_classes, aug_labels):
     fig, axes = plt.subplots(2, 5, figsize=(20, 8))
     axes = axes.flatten()
 
+    normal_points = pca[:-10]
+    centers = pca[-10]
+    tree = spatial.KDTree(normal_points)
+
+    s = set(lable_classes)
+    s.remove(-1)
+
+    for i, c in enumerate(s):
+        class_labels = lc == c
+        originals = aug_labels == 1
+        augmented = aug_labels == 0
+        centres = aug_labels == -1
+
+        ids_original = np.where(np.logical_and(class_labels, originals))[0]
+        ids_augmented = np.where(np.logical_and(class_labels, augmented))[0]
+
+        nearest_ids = tree.query(centers[c], k=5)[1]
+
+        axes[i].set(title=f'class {c}')
+        axes[i].get_xaxis().set_visible(False)
+        axes[i].get_yaxis().set_visible(False)
+        axes[i].axis('off')
+        sns.scatterplot(ax=axes[i], x=pca[:, 0], y=pca[:, 1], s=7, color='#d1dade')
+        sns.scatterplot(ax=axes[i], x=pca[ids_augmented, 0], y=pca[ids_augmented, 1], s=10, alpha=0.5)
+        sns.scatterplot(ax=axes[i], x=pca[ids_original, 0], y=pca[ids_original, 1], s=10, color='#ff802b', alpha=0.5)
+        sns.scatterplot(ax=axes[i], x=pca[centres, 0], y=pca[centres, 1], s=10, color='#000000', marker='s')
+
+
+
+    plt.show()
+
+def plot_class_representation_with_centers(pca, name, lable_classes, aug_labels, centers):
+    print(f'{name} class representation')
+    lc = np.array(lable_classes)
+    fig, axes = plt.subplots(2, 5, figsize=(20, 8))
+    axes = axes.flatten()
+
+    normal_points = pca[:-10]
+    centers = pca[-10]
+    tree = spatial.KDTree(normal_points)
+
     s = set(lable_classes)
 
     for i, c in enumerate(set(lable_classes)):
         class_labels = lc == c
         originals = aug_labels == 1
         augmented = aug_labels == 0
+
+        nearest_ids = tree.query(centers[c], k=5)[1]
 
         ids_original = np.where(np.logical_and(class_labels, originals))[0]
         ids_augmented = np.where(np.logical_and(class_labels, augmented))[0]
@@ -199,9 +248,12 @@ def plot_class_representation(pca, name, lable_classes, aug_labels):
         axes[i].axis('off')
         sns.scatterplot(ax=axes[i], x=pca[:, 0], y=pca[:, 1], s=7, color='#d1dade')
         sns.scatterplot(ax=axes[i], x=pca[ids_augmented, 0], y=pca[ids_augmented, 1], s=10, alpha=0.5)
-        sns.scatterplot(ax=axes[i], x=pca[ids_original, 0], y=pca[ids_original, 1], s=10, color='#ff802b', alpha=0.5)
-        # sns.scatterplot(ax=axes[i], x=pca[ids_original, 0], y=pca[ids_original, 1], s=10, color='#ff802b', alpha=0.3)
-        # sns.scatterplot(ax=axes[i], x=pca[ids_augmented, 0], y=pca[ids_augmented, 1], s=10, color='#4a51cf', alpha=0.3)
+        sns.scatterplot(ax=axes[i], x=pca[ids_original, 0], y=pca[ids_original, 1], s=10, color='#ff802b',
+                        alpha=0.5)
+        sns.scatterplot(ax=axes[i], x=pca[ids_original, 0], y=pca[ids_original, 1], s=10, color='red',
+                        alpha=0.5)
+        sns.scatterplot(ax=axes[i], x=pca[ids_original, 0], y=pca[ids_original, 1], s=10, color='red',
+                        alpha=0.5)
 
     plt.show()
 
