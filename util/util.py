@@ -57,7 +57,7 @@ def encode_batchwise(dataloader, model, device):
         batch_data = batch.to(device)
         embeddings.append(model.encode(batch_data).detach().cpu())
         labels = labels + blabels.tolist()
-    return torch.cat(embeddings, dim=0), labels
+    return torch.cat(embeddings, dim=0).numpy(), labels
 
 
 def decode_batchwise(dataloader, model, device):
@@ -66,7 +66,7 @@ def decode_batchwise(dataloader, model, device):
     decodings = []
     for batch in dataloader:
         batch_data = batch[0]
-        decodings.append(model(batch_data).detach().cpu())
+        decodings.append(model.decode(batch_data).detach().cpu())
     return torch.cat(decodings, dim=0).numpy()
 
 
