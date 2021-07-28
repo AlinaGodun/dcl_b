@@ -9,7 +9,7 @@ from util.gradflow_check import plot_grad_flow
 
 class IDEC(AbstractDecModel):
     def __init__(self, model=RotNet(num_classes=4, num_blocks=3), train_loader=None, device='cpu', dec_type='DEC',
-                 , n_clusters=10, cluster_centres=torch.rand(size=(4, 12288))):
+                 n_clusters=10, cluster_centres=torch.rand(size=(4, 12288))):
         super().__init__(model=model, train_loader=train_loader, device=device, n_clusters=n_clusters, dec_type=dec_type,
                          cluster_centres=cluster_centres)
 
