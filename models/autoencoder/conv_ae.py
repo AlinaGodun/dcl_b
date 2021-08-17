@@ -4,17 +4,37 @@ import torch.nn as nn
 import numpy as np
 
 from models.abstract_model.models import AbstractModel
+from util.pytorchtools import EarlyStopping
 
 
-def fit(model, trainloader, epochs, start_lr, device, model_path=None, loss_fn=None, weight_decay=1e-5):
+def fit(model, trainloader, epochs, start_lr, device, model_path=None, loss_fn=None, weight_decay=1e-5, eval_data_loader=None):
     optimizer = torch.optim.Adam(model.parameters(), lr=start_lr, weight_decay=weight_decay)
     if loss_fn is None:
         loss_fn = torch.nn.MSELoss()
     i = 0
+
+    # to track the training loss as the model trains
+    train_losses = []
+    # to track the validation loss as the model trains
+    valid_losses = []
+
+    early_stopping = EarlyStopping(patience=10, verbose=True, path=model_path)
+
     for epoch_i in range(epochs):
+        model.train()
+
         for batch_data, _ in trainloader:
             # load batch on device
             batch = batch_data.to(device)
+
+            if eval_data_loader is not None:
+                with torch.no_grad():
+                    model.eval()
+                    for x, labels in eval_data_loader:
+                        x = x.to(device)
+                        reconstruction = model(x)
+                        loss = loss_fn(reconstruction, x)
+                        valid_losses.append(loss.item())
             # reset gradients from last iteration
             optimizer.zero_grad()
             reconstruction = model(batch)
@@ -24,10 +44,26 @@ def fit(model, trainloader, epochs, start_lr, device, model_path=None, loss_fn=N
             # update the internal params (weights, etc.)
             optimizer.step()
             i += 1
+            train_losses.append(loss.item())
+
+        train_loss = np.average(train_losses)
+        valid_loss = np.average(valid_losses)
+        train_losses = []
+        valid_losses = []
+
         if epoch_i % 5 == 0 and model_path is not None:
-            print(f"{model.name}: Epoch {epoch_i + 1}/{epochs} - Iteration {i} - Train loss:{loss.item():.4f},",
-                  f"LR: {optimizer.param_groups[0]['lr']}")
-            torch.save(model.state_dict(), model_path)
+            print(f"{model.name}: Epoch {epoch_i + 1}/{epochs} - Iteration {i} - Train loss:{train_loss:.4f}",
+                  f"Validation loss:{valid_loss:.4f}, LR: {optimizer.param_groups[0]['lr']}")
+            if model_path is not None:
+                model.eval()
+                torch.save(model.state_dict(), model_path)
+
+        if eval_data_loader is not None:
+            early_stopping(valid_loss, model)
+
+            if early_stopping.early_stop:
+                break
+
     return model
 
 
@@ -180,15 +216,16 @@ class ConvAE(AbstractModel):
             labels = labels + batch_labels.tolist()
         return torch.cat(embeddings, dim=0).numpy(), np.array(labels)
 
-    def fit(self, dataloader, epochs, start_lr, device, model_path=None, loss_fn=None, weight_decay=1e-5):
+    def fit(self, data_loader, epochs, start_lr, device, model_path=None, loss_fn=None, weight_decay=1e-5, eval_data_loader=None):
         return fit(model=self,
-            trainloader=dataloader,
+            trainloader=data_loader,
             epochs=epochs,
             start_lr=start_lr,
             device=device,
             model_path=model_path,
             loss_fn=loss_fn,
-            weight_decay=weight_decay)
+            weight_decay=weight_decay,
+            eval_data_loader=eval_data_loader)
 
 
 class ConvAESmall(nn.Module):

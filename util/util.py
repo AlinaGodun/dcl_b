@@ -126,6 +126,7 @@ def load_model(name, device, cluster_centres=torch.rand(size=(10, 12288))):
 
 
 def compute_nmi_and_pca(model, name, colors_classes, device, testloader, flatten=True, layer='conv2'):
+    model.eval()
     if 'pretrained' in name:
         decoder = model
     else:
@@ -138,6 +139,7 @@ def compute_nmi_and_pca(model, name, colors_classes, device, testloader, flatten
     lable_classes = [colors_classes[l] for l in labels]
 
     n_clusters = len(set(labels))
+    print(n_clusters)
     kmeans = KMeans(n_clusters=n_clusters)
     kmeans.fit(embedded_data)
     nmi = normalized_mutual_info_score(labels, kmeans.labels_)

@@ -13,11 +13,6 @@ class IDEC(AbstractDecModel):
             degree_of_space_distortion=0.1, dec_factor=0.1, with_aug=False):
         lr = start_lr * dec_factor
         optimizer = torch.optim.Adam(self.parameters(), lr=lr, weight_decay=weight_decay)
-        # optimizer = torch.optim.SGD(self.parameters(),
-        #                             lr=lr,
-        #                             momentum=0.9,
-        #                             nesterov=True,
-        #                             weight_decay=weight_decay)
         i = 0
 
         for epoch in range(epochs):
@@ -44,7 +39,6 @@ class IDEC(AbstractDecModel):
                     base_loss = self.loss(mapped_feats_i, mapped_feats_j)
                     cluster_loss = self.cluster_module.loss_dec_compression(feats)
 
-                # TODO: experiment with degree_of_space_distortion
                 loss = base_loss + degree_of_space_distortion * cluster_loss
                 # loss = cluster_loss
 
