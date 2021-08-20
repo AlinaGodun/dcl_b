@@ -13,19 +13,19 @@ class SimCLR(AbstractModel):
         """
         Implementation of A Simple Framework for Contrastive Learning of Visual Representations (SimCLR):
 
-        Parameters:
-        -----------------
-        output_dim: dimension of the output which should be provided by the model.
-        resnet_model: which resnet model should be used as a base; available options are: cifar_resnet18 (CIFAR-adapted
-        ResNet-18), cifar_resnet50 (CIFAR-adapted ResNet-50), resnet18 (normal ResNet-18, standard pytorch
-        implementation),resnet18 (normal ResNet-50, standard pytorch implementation).
-        tau: temperature parameter; recommended values are in range from 0.1 to 1.0, CIFAR recommended value is 0.5.
-        Returns:
-        -----------------
-        SimCLR model
-        Raises:
-        -----------------
-        KeyError: If resnet_model value is not in the list of available options
+            Parameters:
+                output_dim (int): dimension of the output which should be provided by the model.
+                resnet_model (str): which resnet model should be used as a base; available options are: cifar_resnet18
+                (CIFAR-adapted ResNet-18), cifar_resnet50 (CIFAR-adapted ResNet-50), resnet18 (normal ResNet-18,
+                standard pytorch implementation),resnet18 (normal ResNet-50, standard pytorch implementation).
+                tau (float): temperature parameter; recommended values are in range from 0.1 to 1.0, CIFAR recommended
+                value is 0.5.
+
+            Returns:
+                SimCLR model
+
+            Raises:
+                KeyError: If resnet_model value is not in the list of available options
         """
         super().__init__(name='SimCLR', loss=SimCLRLoss(tau))
 
@@ -44,18 +44,16 @@ class SimCLR(AbstractModel):
         """
         Get resnet which should be used as a base encoder for the SimCLR
 
-        Parameters:
-        -----------------
-        resnet_model: which resnet model should be used as a base; available options are: cifar_resnet18 (CIFAR-adapted
-        ResNet-18), cifar_resnet50 (CIFAR-adapted ResNet-50), resnet18 (normal ResNet-18, standard pytorch
-        implementation),resnet18 (normal ResNet-50, standard pytorch implementation).
-        tau: temperature parameter; recommended values are in range from 0.1 to 1.0, CIFAR recommended value is 0.5.
-        Returns:
-        -----------------
-        Base encoder
-        Raises:
-        -----------------
-        KeyError: If resnet_model value is not in the list of available options
+            Parameters:
+                resnet_model (str): which resnet model should be used as a base; available options are: cifar_resnet18
+                (CIFAR-adapted ResNet-18), cifar_resnet50 (CIFAR-adapted ResNet-50), resnet18 (normal ResNet-18,
+                standard pytorch implementation), resnet18 (normal ResNet-50, standard pytorch implementation).
+
+            Returns:
+                Base encoder
+
+            Raises:
+                KeyError: If resnet_model value is not in the list of available options
         """
         resnet_models = {
             'cifar_resnet18': ResNet18,
@@ -72,22 +70,32 @@ class SimCLR(AbstractModel):
         """
         Forward input x through the model
 
-        Parameters:
-        -----------------
-        x: input to be feed through the model
-        Returns:
-        -----------------
-        (feats, mapped_feats) - where feats is a vector of relevant features which could be used for downstream tasks
-        and mapped_feats is the feature vector mapped to the space needed for SimCLR task
-        Raises:
-        -----------------
-        KeyError: If resnet_model value is not in the list of available options
+            Parameters:
+                x (tensor): input to be feed through the model
+
+            Returns:
+                (feats, mapped_feats) - where feats is a vector of relevant features which could be used for downstream
+                tasks and mapped_feats is the feature vector mapped to the space where SimCLR's contrasive loss is
+                applied
         """
         feats = self.base_encoder(x)
         mapped_feats = self.projection_head(feats)
         return feats, mapped_feats
 
     def forward_batch(self, data_loader, device, flatten=None):
+        """
+        Forward data provided by the data_loader batchwise
+
+            Parameters:
+                data_loader (Dataloader): dataloder providing data to be forwarded
+                device (str): name of the device on which the data should be processed
+                flatten (Boolean): this argument is not used in SimCLR; it is present because SimCLR is a subclass of
+                AbstractModel, and other models need this argument
+
+            Returns:
+                (forwarded_data, labels, augmented_labels) - where forwarded data is a data forwarded through the model,
+                labels contain ground truth labels and augmented_labels are set to 1 if data is augmented and 0 if not
+        """
         embeddings = []
         labels = []
         aug_labels = []
@@ -101,6 +109,21 @@ class SimCLR(AbstractModel):
 
     def fit(self, data_loader, epochs, start_lr, device, model_path, weight_decay=1e-6, gf=False, write_stats=True):
         optimizer = torch.optim.Adam(self.parameters(), lr=start_lr, weight_decay=weight_decay)
+        """
+        Train model. Automatically saves model at the provided model_path.
+        
+            Parameters:
+                data_loader (Dataloader): dataloder providing data to be forwarded
+                epochs (int): number of epochs the model should be trained for
+                start_lr (float): training's learning rate
+                device (str): device's name for training
+                model_path (str): path at which the model should be saved
+                weight_decay (float): training's weight decay
+                gf (Boolean): if True, plot gradient flow
+                write_stats (Boolean): if True, write training statistics
+            Returns:
+                model (SimCLR): trained model
+        """
         i = 0
 
         for epoch in range(epochs):
