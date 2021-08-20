@@ -6,7 +6,26 @@ from models.simclr.transforms import SimCLRTransforms
 
 
 class SimCLRSTL10(CustomCifar):
-    def __init__(self, train_path='./data', download=False, data_percent=0.4, train=True, with_original=True, transforms=None):
+    def __init__(self, train_path='./data', download=False, data_percent=1.0, train=True, with_original=True,
+                 transforms=None):
+        """
+        Custom wrapper for STL10 dataset.
+
+            Parameters:
+                train_path (str): path to the dataset
+                download (Boolean): if True, downloads dataset to the train_path, if False, looks for the dataset at
+                train_path
+                data_percent (float): percentage of data to be loaded
+                train (Boolean): if True, loads train images; if False, loads test images
+                with_original (Boolean): if True, SimCLRTransforms will load original image along with augmented views;
+                if False, will load only augmented views
+                transforms (Boolean): if True, transforms the images for training; if False, only changes images
+                to tensors
+
+            Returns:
+                SimCLRSTL10 Dataset
+        """
+
         if transforms is None:
             transforms = train
 
@@ -29,10 +48,37 @@ class SimCLRSTL10(CustomCifar):
         self.data = np.transpose(data, (0, 2, 3, 1))
 
     def __len__(self):
+        """
+        Returns number of images in the dataset
+
+            Returns:
+                Number of images in the dataset
+        """
         return self.image_num
 
     def __getitem__(self, idx):
+        """
+        Returns image at index idx. If train or transforms is set to True, returns two augmented views of the image.
+        If with_original is set to True, returns original image together with augmented views.
+
+            Parameters:
+                idx (int): index of the image
+
+            Returns:
+                Image at index idx. If train or transforms is set to True, returns two augmented views of the image.
+                If with_original is set to True, returns original image together with augmented views.
+        """
         return self.transforms(self.data[idx]), -1
 
     def get_class(self, idx):
+        """
+        Returns class of the image at this index
+
+            Parameters:
+                idx (int): index of the image
+
+            Returns:
+                class of the image at this index
+        """
+        # since this dataset is unlabeled, always return -1
         return -1
