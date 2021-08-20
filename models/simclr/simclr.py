@@ -10,6 +10,23 @@ from util.gradflow_check import plot_grad_flow
 
 class SimCLR(AbstractModel):
     def __init__(self, output_dim=128, resnet_model='resnet50', tau=0.5):
+        """
+        Implementation of A Simple Framework for Contrastive Learning of Visual Representations (SimCLR):
+
+        Parameters:
+        -----------------
+        output_dim: dimension of the output which should be provided by the model.
+        resnet_model: which resnet model should be used as a base; available options are: cifar_resnet18 (CIFAR-adapted
+        ResNet-18), cifar_resnet50 (CIFAR-adapted ResNet-50), resnet18 (normal ResNet-18, standard pytorch
+        implementation),resnet18 (normal ResNet-50, standard pytorch implementation).
+        tau: temperature parameter; recommended values are in range from 0.1 to 1.0, CIFAR recommended value is 0.5.
+        Returns:
+        -----------------
+        SimCLR model
+        Raises:
+        -----------------
+        KeyError: If resnet_model value is not in the list of available options
+        """
         super().__init__(name='SimCLR', loss=SimCLRLoss(tau))
 
         self.base_encoder = self.get_base_encoder(resnet_model)
@@ -24,6 +41,22 @@ class SimCLR(AbstractModel):
         self.base_encoder.fc = nn.Sequential()
 
     def get_base_encoder(self, resnet_model):
+        """
+        Get resnet which should be used as a base encoder for the SimCLR
+
+        Parameters:
+        -----------------
+        resnet_model: which resnet model should be used as a base; available options are: cifar_resnet18 (CIFAR-adapted
+        ResNet-18), cifar_resnet50 (CIFAR-adapted ResNet-50), resnet18 (normal ResNet-18, standard pytorch
+        implementation),resnet18 (normal ResNet-50, standard pytorch implementation).
+        tau: temperature parameter; recommended values are in range from 0.1 to 1.0, CIFAR recommended value is 0.5.
+        Returns:
+        -----------------
+        Base encoder
+        Raises:
+        -----------------
+        KeyError: If resnet_model value is not in the list of available options
+        """
         resnet_models = {
             'cifar_resnet18': ResNet18,
             'cifar_resnet50': ResNet50,
@@ -36,6 +69,20 @@ class SimCLR(AbstractModel):
         return resnet_models[resnet_model]()
 
     def forward(self, x):
+        """
+        Forward input x through the model
+
+        Parameters:
+        -----------------
+        x: input to be feed through the model
+        Returns:
+        -----------------
+        (feats, mapped_feats) - where feats is a vector of relevant features which could be used for downstream tasks
+        and mapped_feats is the feature vector mapped to the space needed for SimCLR task
+        Raises:
+        -----------------
+        KeyError: If resnet_model value is not in the list of available options
+        """
         feats = self.base_encoder(x)
         mapped_feats = self.projection_head(feats)
         return feats, mapped_feats
@@ -82,12 +129,5 @@ class SimCLR(AbstractModel):
                       f"LR: {optimizer.param_groups[0]['lr']}")
                 if model_path is not None:
                     torch.save(self.state_dict(), model_path)
-
-        if write_stats:
-            ew, iw = self.init_statistics()
-            self.write_statistics(ew, 'epoch')
-            self.write_statistics(iw, 'iteration')
-            ew.close()
-            iw.close()
 
         return self
