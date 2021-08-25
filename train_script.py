@@ -10,10 +10,10 @@ import sklearn
 # util functions
 from sklearn.cluster import KMeans
 
+from models.simclr.custom_stl10 import SimCLRSTL10
 from util.util import *
 
 # dataset functions
-from dataset import load_util
 
 # autoencoder
 from models.simclr.simclr import SimCLR
