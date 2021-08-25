@@ -2,7 +2,6 @@ import torch
 import torchvision
 import numpy as np
 from torch import nn
-from models.simclr.cifar_resnets import ResNet18, ResNet50
 from models.simclr.loss import SimCLRLoss
 from models.abstract_model.models import AbstractModel
 from util.gradflow_check import plot_grad_flow
@@ -45,9 +44,9 @@ class SimCLR(AbstractModel):
         Get resnet which should be used as a base encoder for the SimCLR
 
             Parameters:
-                resnet_model (str): which resnet model should be used as a base; available options are: cifar_resnet18
-                (CIFAR-adapted ResNet-18), cifar_resnet50 (CIFAR-adapted ResNet-50), resnet18 (normal ResNet-18,
-                standard pytorch implementation), resnet18 (normal ResNet-50, standard pytorch implementation).
+                resnet_model (str): which resnet model should be used as a base; available options are: resnet18 (normal
+                ResNet-18, standard pytorch implementation), resnet18 (normal ResNet-50, standard pytorch
+                implementation).
 
             Returns:
                 Base encoder
@@ -56,8 +55,6 @@ class SimCLR(AbstractModel):
                 KeyError: If resnet_model value is not in the list of available options
         """
         resnet_models = {
-            'cifar_resnet18': ResNet18,
-            'cifar_resnet50': ResNet50,
             'resnet18': torchvision.models.resnet18,
             'resnet50': torchvision.models.resnet50,
         }

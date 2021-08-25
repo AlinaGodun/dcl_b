@@ -43,7 +43,7 @@ class RotNetSTL10(Dataset):
     def __getitem__(self, idx):
         class_id = idx // self.rotation_class_image_num
         img_id = idx - class_id * self.rotation_class_image_num
-        return self.transforms.to_tensor_transform(self.rotated_data[class_id][img_id]), class_id
+        return self.transforms.to_tensor(self.rotated_data[class_id][img_id]), class_id
 
     def get_class(self, idx):
         class_id = idx // self.rotation_class_image_num
