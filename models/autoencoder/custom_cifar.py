@@ -3,12 +3,22 @@ import torch
 import numpy as np
 from torch.utils.data import Dataset
 
-from models.abstract_model.dataset import CustomCifar
-from models.simclr.transforms import SimCLRTransforms
-
 
 class AECIFAR(Dataset):
-    def __init__(self, train_path, download=False, data_percent=0.4, train=True, start='beginning'):
+    def __init__(self, train_path='./data', download=False, data_percent=1.0, train=True, start='beginning'):
+        """
+        Custom wrapper for CIFAR dataset.
+
+            Parameters:
+                train_path (str): path to the dataset
+                download (Boolean): if True, downloads dataset to the train_path, if False, looks for the dataset at
+                train_path
+                data_percent (float): percentage of data to be loaded
+                train (Boolean): if True, loads train images; if False, loads test images
+
+            Returns:
+                AECIFAR Dataset
+        """
         cifar = torchvision.datasets.CIFAR10(root=train_path, train=train,
                                              download=download)
 
@@ -46,16 +56,39 @@ class AECIFAR(Dataset):
             # self.data[i] = torch.stack(t_images)
             #     t_images.append(t(img))
 
-
     def __len__(self):
+        """
+        Returns number of images in the dataset
+
+            Returns:
+                Number of images in the dataset
+        """
         return self.image_num
 
     def __getitem__(self, idx):
+        """
+        Returns image at index idx.
+
+            Parameters:
+                idx (int): index
+
+            Returns:
+                Image at index idx.
+        """
         class_id = idx // self.class_image_num
         img_id = idx - class_id * self.class_image_num
         return self.data[class_id][img_id], class_id
 
     def get_class(self, idx):
+        """
+        Returns class of the image at this index
+
+            Parameters:
+                idx (int): index of the image
+
+            Returns:
+                class of the image at this index
+        """
         class_id = idx // self.class_image_num
         return self.classes[class_id]
 
