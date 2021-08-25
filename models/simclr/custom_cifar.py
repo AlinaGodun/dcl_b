@@ -1,10 +1,10 @@
 import torchvision
 import numpy as np
-from models.abstract_model.dataset import CustomCifar
+from torch.utils.data import Dataset
 from models.simclr.transforms import SimCLRTransforms
 
 
-class SimCLRCIFAR(CustomCifar):
+class SimCLRCIFAR(Dataset):
     def __init__(self, train_path='./data', download=False, data_percent=1.0, train=True, with_original=False, transforms=None):
         """
         Custom wrapper for CIFAR dataset.
@@ -21,7 +21,7 @@ class SimCLRCIFAR(CustomCifar):
                 to tensors
 
             Returns:
-                SimCLRSTL10 Dataset
+                SimCLRCIFAR Dataset
         """
         if transforms is None:
             transforms = train

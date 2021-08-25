@@ -2,7 +2,6 @@ import torch
 import torchvision
 import numpy as np
 from torch import nn
-from models.simclr.cifar_resnets import ResNet18, ResNet50
 from models.simclr.loss import SimCLRLoss
 from models.abstract_model.models import AbstractModel
 from util.gradflow_check import plot_grad_flow
@@ -33,21 +32,21 @@ class SimCLR(AbstractModel):
 
         input_dim = self.base_encoder.fc.in_features
 
+        self.base_encoder.fc = nn.Sequential()
         self.projection_head = nn.Sequential(
             nn.Linear(input_dim, input_dim, bias=False),
             nn.ReLU(),
             nn.Linear(input_dim, output_dim, bias=False),
         )
-        self.base_encoder.fc = nn.Sequential()
 
     def get_base_encoder(self, resnet_model):
         """
         Get resnet which should be used as a base encoder for the SimCLR
 
             Parameters:
-                resnet_model (str): which resnet model should be used as a base; available options are: cifar_resnet18
-                (CIFAR-adapted ResNet-18), cifar_resnet50 (CIFAR-adapted ResNet-50), resnet18 (normal ResNet-18,
-                standard pytorch implementation), resnet18 (normal ResNet-50, standard pytorch implementation).
+                resnet_model (str): which resnet model should be used as a base; available options are: resnet18
+                (normal ResNet-18, standard pytorch implementation), resnet18 (normal ResNet-50, standard pytorch
+                implementation).
 
             Returns:
                 Base encoder
@@ -56,8 +55,6 @@ class SimCLR(AbstractModel):
                 KeyError: If resnet_model value is not in the list of available options
         """
         resnet_models = {
-            'cifar_resnet18': ResNet18,
-            'cifar_resnet50': ResNet50,
             'resnet18': torchvision.models.resnet18,
             'resnet50': torchvision.models.resnet50,
         }
@@ -87,7 +84,7 @@ class SimCLR(AbstractModel):
         Forward data provided by the data_loader batchwise
 
             Parameters:
-                data_loader (Dataloader): dataloder providing data to be forwarded
+                data_loader (DataLoader): dataloder providing data to be forwarded
                 device (str): name of the device on which the data should be processed
                 flatten (Boolean): this argument is not used in SimCLR; it is present because SimCLR is a subclass of
                 AbstractModel, and other models need this argument
@@ -99,12 +96,14 @@ class SimCLR(AbstractModel):
         embeddings = []
         labels = []
         aug_labels = []
+
         for batch, batch_labels in data_loader:
             batch_data = batch.to(device)
             feats, _ = self(batch_data)
             embeddings.append(feats.detach().cpu())
             labels = labels + batch_labels[0].tolist()
             aug_labels = aug_labels + batch_labels[1].tolist()
+
         return torch.cat(embeddings, dim=0).numpy(), np.array(labels), np.array(aug_labels)
 
     def fit(self, data_loader, epochs, start_lr, device, model_path, weight_decay=1e-6, gf=False, write_stats=True):
@@ -113,7 +112,7 @@ class SimCLR(AbstractModel):
         Train model. Automatically saves model at the provided model_path.
         
             Parameters:
-                data_loader (Dataloader): dataloder providing data to be forwarded
+                data_loader (DataLoader): dataloder providing data to be forwarded
                 epochs (int): number of epochs the model should be trained for
                 start_lr (float): training's learning rate
                 device (str): device's name for training
@@ -129,19 +128,22 @@ class SimCLR(AbstractModel):
         for epoch in range(epochs):
             for step, ((x_i, x_j), _) in enumerate(data_loader):
                 i += 1
+                # load data to device
                 x_i = x_i.to(device)
                 x_j = x_j.to(device)
 
-                optimizer.zero_grad()
-
+                # get feats mapped to the space for simclr loss for augmented images
                 _, mapped_feats_i = self(x_i)
                 _, mapped_feats_j = self(x_j)
 
                 loss = self.loss(mapped_feats_i, mapped_feats_j)
 
+                optimizer.zero_grad()
                 loss.backward()
+
                 if gf:
                     plot_grad_flow(self.named_parameters())
+
                 optimizer.step()
 
                 self.iteration_stats.append(f'{epoch},{i},{loss.item():.4f}')

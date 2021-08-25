@@ -42,7 +42,7 @@ class SimCLRLoss(nn.Module):
                 Loss score for x1 and x2
         """
         c1 = torch.cat((x1, x2), 0)
-        c2 = torch.cat((x2, x1), 0) ## detach? look closer: tensor from same tensors
+        c2 = torch.cat((x2, x1), 0)
         sim_pairwise = torch.exp(self.get_sim_matrix(c1, c2)) 
 
         nom = sim_pairwise.diag()

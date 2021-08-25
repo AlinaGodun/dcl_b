@@ -49,36 +49,37 @@ class IDEC(AbstractDecModel):
         i = 0
 
         for epoch in range(epochs):
+            self.train()
             for step, ((x, x_i, x_j), _) in enumerate(data_loader):
                 i += 1
+
+                # load data to device
                 x = x.to(device)
                 x_i = x_i.to(device)
                 x_j = x_j.to(device)
 
-                optimizer.zero_grad()
+                # get feats and feats mapped to the space for simclr loss for augmented and original images
+                feats_i, mapped_feats_i = self.model(x_i)
+                feats_j, mapped_feats_j = self.model(x_j)
+                feats, _ = self.model(x)
 
+                # compute simclr loss
+                base_loss = self.loss(mapped_feats_i, mapped_feats_j)
+
+                # if with_aug is enabled, use augmented images for dec prediction; if not, use only original image
                 if with_aug:
-                    feats_i, mapped_feats_i = self.model(x_i)
-                    feats_j, mapped_feats_j = self.model(x_j)
-                    feats, _ = self.model(x)
-
-                    base_loss = self.loss(mapped_feats_i, mapped_feats_j)
                     cluster_loss = self.cluster_module.loss_dec_compression(feats, [feats_i, feats_j])
                 else:
-                    _, mapped_feats_i = self.model(x_i)
-                    _, mapped_feats_j = self.model(x_j)
-                    feats, _ = self.model(x)
-
-                    base_loss = self.loss(mapped_feats_i, mapped_feats_j)
                     cluster_loss = self.cluster_module.loss_dec_compression(feats)
 
                 loss = base_loss + degree_of_space_distortion * cluster_loss
-                # loss = cluster_loss
 
                 optimizer.zero_grad()
                 loss.backward()
+
                 if gf:
                     plot_grad_flow(self.named_parameters())
+
                 optimizer.step()
 
                 self.iteration_stats.append(f'{epoch},{i},{loss.item():.4f}')
@@ -88,6 +89,7 @@ class IDEC(AbstractDecModel):
                 print(f"{self.name}: Epoch {epoch + 1}/{epochs} - Iteration {i} - Train loss:{loss.item():.4f},",
                       f"LR: {optimizer.param_groups[0]['lr']}")
                 if model_path is not None:
+                    self.eval()
                     torch.save(self.state_dict(), model_path)
 
         return self

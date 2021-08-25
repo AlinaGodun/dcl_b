@@ -1,11 +1,11 @@
 import torchvision
 import numpy as np
 import torch
-from models.abstract_model.dataset import CustomCifar
+from torch.utils.data import Dataset
 from models.simclr.transforms import SimCLRTransforms
 
 
-class SimCLRSTL10(CustomCifar):
+class SimCLRSTL10(Dataset):
     def __init__(self, train_path='./data', download=False, data_percent=1.0, train=True, with_original=True,
                  transforms=None):
         """
