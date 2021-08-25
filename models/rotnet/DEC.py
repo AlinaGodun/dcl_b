@@ -63,6 +63,8 @@ class DEC(AbstractDecModel):
         # to track the validation loss as the model trains
         valid_losses = []
 
+        cluster_path = model_path.replace('.pth', '_cm.pth')
+
         early_stopping = EarlyStopping(patience=10, verbose=True, path=model_path)
 
         i = 0
@@ -107,6 +109,7 @@ class DEC(AbstractDecModel):
                 if model_path is not None:
                     self.eval()
                     torch.save(self.state_dict(), model_path)
+                    torch.save(self.cluster_module, cluster_path)
 
             if eval_data_loader is not None:
                 early_stopping(valid_loss, self)

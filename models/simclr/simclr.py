@@ -108,10 +108,9 @@ class SimCLR(AbstractModel):
         return torch.cat(embeddings, dim=0).numpy(), np.array(labels), np.array(aug_labels)
 
     def fit(self, data_loader, epochs, start_lr, device, model_path, weight_decay=1e-6, gf=False, write_stats=True):
-        optimizer = torch.optim.Adam(self.parameters(), lr=start_lr, weight_decay=weight_decay)
         """
         Train model. Automatically saves model at the provided model_path.
-        
+
             Parameters:
                 data_loader (DataLoader): dataloder providing data to be forwarded
                 epochs (int): number of epochs the model should be trained for
@@ -124,6 +123,8 @@ class SimCLR(AbstractModel):
             Returns:
                 model (SimCLR): trained model
         """
+        optimizer = torch.optim.Adam(self.parameters(), lr=start_lr, weight_decay=weight_decay)
+
         i = 0
 
         for epoch in range(epochs):

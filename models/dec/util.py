@@ -21,15 +21,7 @@ def dec_compression_value(pred_labels):
 
 
 def dec_compression_loss_fn(q_clean, q_augs=[]):
-    ## 1 q_clean = dec_prediction with clean data
-    ## 2 p_clean = dec compression data with clean data
-    ## 3 q_aug = dec prediction with aug data
-    ## 4 loss_q_clean_p_clean
-    ## 5 loss q_aug_p_clean
-    ## 6 loss = (loss_q_clean_p_clean + q_aug_p_clean) / n
-
     p_clean = dec_compression_value(q_clean).detach().data
-    ## take average of p_clean
     loss = get_loss(p_clean, q_clean)
 
     for q_aug in q_augs:

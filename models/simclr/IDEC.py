@@ -48,6 +48,8 @@ class IDEC(AbstractDecModel):
         optimizer = torch.optim.Adam(self.parameters(), lr=lr, weight_decay=weight_decay)
         i = 0
 
+        cluster_path = model_path.replace('.pth', '_cm.pth')
+
         for epoch in range(epochs):
             self.train()
             for step, ((x, x_i, x_j), _) in enumerate(data_loader):
@@ -91,5 +93,6 @@ class IDEC(AbstractDecModel):
                 if model_path is not None:
                     self.eval()
                     torch.save(self.state_dict(), model_path)
+                    cluster_path = model_path.replace('.pth', '_cm.pth')
 
         return self
