@@ -49,7 +49,7 @@ class RotNetCIFAR(Dataset):
     def __getitem__(self, idx):
         class_id = idx // self.rotation_class_image_num
         img_id = idx - class_id * self.rotation_class_image_num
-        return self.transforms.to_tensor_transform(self.rotated_data[class_id][img_id]), class_id
+        return self.transforms.to_tensor(self.rotated_data[class_id][img_id]), class_id
 
     def get_class(self, idx):
         class_id = idx // self.rotation_class_image_num
@@ -78,7 +78,7 @@ class RotNetCIFARForPlot(Dataset):
             for x in original_data:
                 rot_d, rot_l = self.transforms(x)
                 for rd, rl in zip(rot_d, rot_l):
-                    data_i.append(LocalImage(self.transforms.to_tensor_transform(rd), rl))
+                    data_i.append(LocalImage(self.transforms.to_tensor(rd), rl))
 
             self.data[i] = data_i
 
@@ -146,7 +146,7 @@ class RotNetCIFARForPlotAway(Dataset):
     def __getitem__(self, idx):
         class_id = idx // self.rotation_class_image_num
         img_id = idx - class_id * self.rotation_class_image_num
-        return self.transforms.to_tensor_transform(self.rotated_data[class_id][img_id]), class_id
+        return self.transforms.to_tensor(self.rotated_data[class_id][img_id]), class_id
 
     def get_class(self, idx):
         class_id = idx // self.rotation_class_image_num

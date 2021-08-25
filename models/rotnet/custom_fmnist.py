@@ -6,7 +6,7 @@ from models.rotnet.transforms import RotNetTransforms
 
 
 class RotNetFashionMNIST(Dataset):
-    def __init__(self, train_path, download=False, data_percent=0.4, train=True):
+    def __init__(self, train_path, download=False, data_percent=0.4, train=True, start='beginning'):
         self.transforms = RotNetTransforms(grey=True)
 
         fm = torchvision.datasets.FashionMNIST(root=train_path, train=train, download=download)
@@ -29,7 +29,10 @@ class RotNetFashionMNIST(Dataset):
         print('3')
         for i in range(len(self.classes)):
             i_mask = targets == i
-            data = fm.data[i_mask][:class_image_num]
+            if start == 'beginning':
+                data = fm.data[i_mask][:class_image_num]
+            else:
+                data = fm.data[i_mask][:-class_image_num]
 
             for d in data:
                 rotated_d, rotated_labels = self.transforms(d)
@@ -54,7 +57,7 @@ class RotNetFashionMNIST(Dataset):
     def __getitem__(self, idx):
         class_id = idx // self.rotation_class_image_num
         img_id = idx - class_id * self.rotation_class_image_num
-        return self.transforms.to_tensor_transform(self.rotated_data[class_id][img_id]), class_id
+        return self.transforms.to_tensor(self.rotated_data[class_id][img_id]), class_id
 
     def get_class(self, idx):
         class_id = idx // self.rotation_class_image_num
