@@ -127,6 +127,7 @@ class SimCLR(AbstractModel):
         i = 0
 
         for epoch in range(epochs):
+            self.train()
             for step, ((x_i, x_j), _) in enumerate(data_loader):
                 i += 1
                 # load data to device
@@ -154,6 +155,7 @@ class SimCLR(AbstractModel):
                 print(f"{self.name}: Epoch {epoch + 1}/{epochs} - Iteration {i} - Train loss:{loss.item():.4f},",
                       f"LR: {optimizer.param_groups[0]['lr']}")
                 if model_path is not None:
+                    self.eval()
                     torch.save(self.state_dict(), model_path)
 
         return self

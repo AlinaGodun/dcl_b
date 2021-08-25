@@ -56,12 +56,13 @@ class RotNet(AbstractModel):
 
         main_blocks += additional_blocks
 
+        self.feat_block_names = [f'conv{s + 1}' for s in range(num_blocks)]
+
         if with_features:
             main_blocks += [RotNetGlobalAveragePooling()]
             main_blocks += [nn.Linear(n_channels[1], num_clusters)]
             main_blocks += [nn.Linear(num_clusters, num_classes)]
 
-            self.feat_block_names = [f'conv{s+1}' for s in range(num_blocks)]
             self.feat_block_names += ['pooling'] + ['features'] + ['classifier']
         else:
             main_blocks.append(nn.Sequential(OrderedDict([
@@ -69,7 +70,7 @@ class RotNet(AbstractModel):
                 ('Classifier', nn.Linear(n_channels[1], num_classes))
             ])))
 
-            self.feat_block_names = [f'conv{s + 1}' for s in range(num_blocks)] + ['classifier']
+            self.feat_block_names += ['classifier']
 
         self.feat_blocks = nn.ModuleList(main_blocks)
 
@@ -104,7 +105,7 @@ class RotNet(AbstractModel):
         Forward data provided by the data_loader batchwise
 
             Parameters:
-                data_loader (Dataloader): dataloder providing data to be forwarded
+                data_loader (DataLoader): dataloder providing data to be forwarded
                 device (str): name of the device on which the data should be processed
                 flatten (Boolean): if True, flatten the output of the layer; depends on which layer is used for
                 forwaring; required if provided layer is ConvNet and output is used for k-means
@@ -126,6 +127,7 @@ class RotNet(AbstractModel):
 
             embeddings.append(feats.detach().cpu())
             labels = labels + batch_labels.tolist()
+
         return torch.cat(embeddings, dim=0).numpy(), np.array(labels)
 
     def fit(self, data_loader, epochs, start_lr, device, model_path, weight_decay=5e-4, gf=False, write_stats=True):
@@ -153,6 +155,7 @@ class RotNet(AbstractModel):
         i = 0
 
         for epoch in range(epochs):
+            self.train()
             for step, (x, labels) in enumerate(data_loader):
                 i += 1
                 x = x.to(device)
@@ -176,6 +179,7 @@ class RotNet(AbstractModel):
                 print(f"{self.name}: Epoch {epoch + 1}/{epochs} - Iteration {i} - Train loss:{loss.item():.4f},",
                       f"LR: {optimizer.param_groups[0]['lr']}")
                 if model_path is not None:
+                    self.eval()
                     torch.save(self.state_dict(), model_path)
 
         return self

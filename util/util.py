@@ -9,7 +9,7 @@ from sklearn.decomposition import PCA
 from sklearn.metrics import normalized_mutual_info_score
 
 from models.simclr.IDEC import IDEC as SimClrIDEC
-from models.rotnet.IDEC import IDEC as RotNetIDEC
+from models.rotnet.DEC import DEC as RotNetIDEC
 from models.rotnet.rotnet import RotNet
 from models.simclr.simclr import SimCLR
 import seaborn as sns

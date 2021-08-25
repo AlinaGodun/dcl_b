@@ -5,7 +5,20 @@ from models.rotnet.transforms import RotNetTransforms
 
 
 class RotNetCIFAR(Dataset):
-    def __init__(self, train_path, download=False, data_percent=0.4, train=True):
+    def __init__(self, train_path='./data', download=False, data_percent=1.0, train=True, start='beginning'):
+        """
+        Custom wrapper for CIFAR dataset.
+
+            Parameters:
+                train_path (str): path to the dataset
+                download (Boolean): if True, downloads dataset to the train_path, if False, looks for the dataset at
+                train_path
+                data_percent (float): percentage of data to be loaded
+                train (Boolean): if True, loads train images; if False, loads test images
+
+            Returns:
+                RotNetCIFAR Dataset
+        """
         self.transforms = RotNetTransforms()
 
         cifar = torchvision.datasets.CIFAR10(root=train_path, train=train, download=download)
@@ -24,14 +37,13 @@ class RotNetCIFAR(Dataset):
 
         for i in range(len(self.classes)):
             i_mask = targets == i
-            data = cifar.data[i_mask][:class_image_num]
+            if start == 'beginning':
+                data = cifar.data[i_mask][:class_image_num]
+            else:
+                data = cifar.data[i_mask][:-class_image_num]
 
             for d in data:
                 rotated_d, rotated_labels = self.transforms(d)
-                imgs = [LocalImage(ro)]
-
-                for rot_d, rot_label in zip(rotated_d, rotated_labels):
-                    img = LocalImage(rot_d, )
 
                 rotated_data_list += rotated_d
                 self.rotated_labels += rotated_labels
@@ -44,14 +56,38 @@ class RotNetCIFAR(Dataset):
             self.rotated_data[i] = rotated_data_list[i_mask]
 
     def __len__(self):
+        """
+        Returns number of images in the dataset
+
+            Returns:
+                Number of images in the dataset
+        """
         return self.rotation_image_num
 
     def __getitem__(self, idx):
+        """
+        Returns image at index idx.
+
+            Parameters:
+                idx (int): index
+
+            Returns:
+                Image at index idx.
+        """
         class_id = idx // self.rotation_class_image_num
         img_id = idx - class_id * self.rotation_class_image_num
         return self.transforms.to_tensor(self.rotated_data[class_id][img_id]), class_id
 
     def get_class(self, idx):
+        """
+        Returns class of the image at this index
+
+            Parameters:
+                idx (int): index of the image
+
+            Returns:
+                class of the image at this index
+        """
         class_id = idx // self.rotation_class_image_num
         return self.rotated_labels[class_id]
 

@@ -85,7 +85,7 @@ class SimCLRCIFAR(Dataset):
         return self.classes[class_id]
 
 
-class SimCLRCIFARForPlot(CustomCifar):
+class SimCLRCIFARForPlot(Dataset):
     def __init__(self, train_path, download=False, data_percent=0.4, train=False, with_original=True, transforms=True):
         if transforms is None:
             transforms = train

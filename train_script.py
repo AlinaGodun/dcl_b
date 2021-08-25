@@ -19,7 +19,7 @@ from util.util import *
 from models.simclr.simclr import SimCLR
 from models.rotnet.rotnet import RotNet
 
-from models.rotnet.IDEC import IDEC as RotNetIDEC
+from models.rotnet.DEC import DEC as RotNetIDEC
 from models.simclr.IDEC import IDEC as SimClrIDEC
 from models.rotnet.custom_stl10 import RotNetSTL10
 
