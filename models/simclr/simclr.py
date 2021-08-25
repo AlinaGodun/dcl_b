@@ -28,6 +28,11 @@ class SimCLR(AbstractModel):
         """
         super().__init__(name='SimCLR', loss=SimCLRLoss(tau))
 
+        self.resnet_models = {
+            'resnet18': torchvision.models.resnet18,
+            'resnet50': torchvision.models.resnet50,
+        }
+
         self.base_encoder = self.get_base_encoder(resnet_model)
 
         input_dim = self.base_encoder.fc.in_features
@@ -54,14 +59,10 @@ class SimCLR(AbstractModel):
             Raises:
                 KeyError: If resnet_model value is not in the list of available options
         """
-        resnet_models = {
-            'resnet18': torchvision.models.resnet18,
-            'resnet50': torchvision.models.resnet50,
-        }
-        if resnet_model not in resnet_models.keys():
+        if resnet_model not in self.resnet_models.keys():
             raise KeyError(f'Provided resnet model: {resnet_model} is not available. \
-             Available resnet models: {resnet_models}')
-        return resnet_models[resnet_model]()
+             Available resnet models: {self.resnet_models.keys()}')
+        return self.resnet_models[resnet_model]()
 
     def forward(self, x):
         """
