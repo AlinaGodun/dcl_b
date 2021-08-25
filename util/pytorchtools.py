@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+"""This code is taken from: https://github.com/Bjarten/early-stopping-pytorch"""
 
 class EarlyStopping:
     """Early stops the training if validation loss doesn't improve after a given patience."""
@@ -26,8 +27,8 @@ class EarlyStopping:
         self.delta = delta
         self.path = path
         self.trace_func = trace_func
-    def __call__(self, val_loss, model):
 
+    def __call__(self, val_loss, model):
         score = -val_loss
 
         if self.best_score is None:
@@ -44,7 +45,7 @@ class EarlyStopping:
             self.counter = 0
 
     def save_checkpoint(self, val_loss, model):
-        '''Saves model when validation loss decrease.'''
+        """Saves model when validation loss decrease."""
         if self.verbose:
             self.trace_func(f'Validation loss decreased ({self.val_loss_min:.6f} --> {val_loss:.6f}).  Saving model ...')
         torch.save(model.state_dict(), self.path)

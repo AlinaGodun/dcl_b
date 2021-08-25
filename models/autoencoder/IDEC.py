@@ -27,6 +27,26 @@ class IDEC(AbstractDecModel):
 
     def fit(self, data_loader, epochs, start_lr, device, model_path, weight_decay=1e-6, gf=False, write_stats=True,
             degree_of_space_distortion=0.1, dec_factor=0.1, with_aug=False, eval_data_loader=None):
+        """
+        Train model. Automatically saves model at the provided model_path.
+
+            Parameters:
+                data_loader (DataLoader): dataloder providing data to be forwarded
+                epochs (int): number of epochs the model should be trained for
+                start_lr (float): training's learning rate
+                device (str): device's name for training
+                model_path (str): path at which the model should be saved
+                weight_decay (float): training's weight decay
+                gf (Boolean): if True, plot gradient flow
+                write_stats (Boolean): if True, write training statistics
+                degree_of_space_distortion (float): weight controlling the impact of IDEC's loss
+                dec_factor (float): factor at which the provided learning rate should be reduced; to be used if provided
+                learning rate equals to the original's SimCLR rate
+                eval_data_loader (DataLoader): dataloader providing data for evaluation; if not None, early stopping
+                is used: if validation loss from the evaluation dataset does not decrease for 10 epochs, training stops
+            Returns:
+                model (IDEC): trained model
+        """
         optimizer = torch.optim.Adam(list(self.model.parameters()) + list(self.cluster_module.parameters()),
                                      lr=start_lr)
 
@@ -36,8 +56,6 @@ class IDEC(AbstractDecModel):
         train_losses = []
         # to track the validation loss as the model trains
         valid_losses = []
-
-        cluster_path = model_path.replace('.pth', '_cm.pth')
 
         i = 0
 
@@ -82,7 +100,6 @@ class IDEC(AbstractDecModel):
                 if model_path is not None:
                     self.eval()
                     torch.save(self.state_dict(), model_path)
-                    torch.save(self.cluster_module, cluster_path)
 
             early_stopping(valid_loss, self)
 

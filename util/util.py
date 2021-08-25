@@ -16,15 +16,6 @@ import seaborn as sns
 from scipy import spatial
 
 
-def denormalize(tensor: torch.Tensor, mean: float = 0.1307, std: float = 0.3081) -> torch.Tensor:
-    """
-    This applies an inverse z-transformation and reshaping to visualize the mnist images properly.
-    """
-    pt_std = torch.as_tensor(std, dtype=torch.float32, device=tensor.device)
-    pt_mean = torch.as_tensor(mean, dtype=torch.float32, device=tensor.device)
-    return (tensor.mul(pt_std).add(pt_mean).view(-1, 3, 32, 32) * 255).int().detach()
-
-
 def plot_images(images: torch.Tensor, pad: int = 0, nrow: int=8):
     """Aligns multiple images on an N by 8 grid"""
     def imshow(img):
@@ -32,9 +23,7 @@ def plot_images(images: torch.Tensor, pad: int = 0, nrow: int=8):
         npimg = img.numpy()
         npimg = np.array(npimg)
         plt.axis('off')
-        # plt.imshow(np.transpose(npimg, (1, 2, 0)),
-        #            vmin=0, vmax=1)
-        plt.imshow(np.transpose(npimg, (1,2,0)), vmin=0, vmax=1)
+        plt.imshow(np.transpose(npimg, (1, 2, 0)), vmin=0, vmax=1)
     imshow(torchvision.utils.make_grid(images, pad_value=255, normalize=False, padding=pad, nrow=nrow))
     plt.show()
 
@@ -48,57 +37,24 @@ def detect_device():
     return device
 
 
-def encode_batchwise(dataloader, model, device):
-    """ Utility function for embedding the whole data set in a mini-batch fashion
+def load_model(name, device, cluster_centres=None):
     """
-    embeddings = []
-    labels = []
-    for batch, blabels in dataloader:
-        batch_data = batch.to(device)
-        embeddings.append(model.encode(batch_data).detach().cpu())
-        labels = labels + blabels.tolist()
-    return torch.cat(embeddings, dim=0).numpy(), labels
-
-
-def decode_batchwise(dataloader, model, device):
-    """ Utility function for decoding the whole data set in a mini-batch fashion
+        Utility method for downloading the models by name. The model should be located in trained_models
+        folder.
+    Parameters:
+                name (str): name of the model. The name must either contain RotNet, CIFAR or AE. If it's a (I)DEC version,
+                it must contain DEC in the name. If it is SimCLR with resnet18 base, it must contain r18 in the name.
+                device (str): device where model should be loaded
+                cluster_centres (torch.Tensor): structure to contain (I)DEC's cluster module. Must have correct
+                dimensionality. Only relevant for IDEC models. Default values provided for RotNet and SimCLR, use if
+                dimensionality of your model is not default one
+            Returns:
+                model (IDEC): trained model
     """
-    decodings = []
-    for batch in dataloader:
-        batch_data = batch[0]
-        decodings.append(model.decode(batch_data).detach().cpu())
-    return torch.cat(decodings, dim=0).numpy()
-
-
-def predict_batchwise(dataloader, model, cluster_module, device):
-    """ Utility function for predicting the cluster labels over the whole data set in a mini-batch fashion
-    """
-    predictions = []
-    for batch in dataloader:
-        batch_data = batch[0].to(device)
-        prediction = cluster_module.prediction_hard(model.encode(batch_data)).detach().cpu()
-        predictions.append(prediction)
-    return torch.cat(predictions, dim=0).numpy()
-
-
-def evaluate_batchwise(dataloader, model, cluster_module, device):
-    """ Utility function for evaluating the cluster performance with NMI in a mini-batch fashion
-    """
-    predictions = []
-    labels = []
-    for batch in dataloader:
-        batch_data = batch[0].to(device)
-        label = batch[1]
-        labels.append(label)
-        prediction = cluster_module.prediction_hard(model.encode(batch_data)).detach().cpu()
-        predictions.append(prediction)
-    predictions = torch.cat(predictions, dim=0).numpy()
-    labels = torch.cat(labels, dim=0).numpy()
-    return normalized_mutual_info_score(labels, predictions)
-
-
-def load_model(name, device, cluster_centres=torch.rand(size=(10, 12288))):
     if 'RotNet' in name:
+        if cluster_centres is None:
+            cluster_centres = torch.rand(size=(10, 12288))
+
         if 'DEC' not in name:
             model = RotNet(num_classes=4)
         else:
@@ -112,12 +68,9 @@ def load_model(name, device, cluster_centres=torch.rand(size=(10, 12288))):
         if 'DEC' not in name:
             model = SimCLR(resnet_model=resnet_model)
         else:
-            if 'c10' in name:
-                model = SimClrIDEC(cluster_centres=torch.rand(size=(10, 2048)))
-            elif 'c30' in name:
-                model = SimClrIDEC(cluster_centres=torch.rand(size=(30, 2048)))
-            else:
-                model = SimClrIDEC()
+            if cluster_centres is None:
+                cluster_centres = torch.rand(size=(10, 2048))
+            model = SimClrIDEC(cluster_centres=cluster_centres)
 
     state_dict = torch.load(f'trained_models/{name}', map_location=device)
     model.load_state_dict(state_dict)
@@ -125,7 +78,28 @@ def load_model(name, device, cluster_centres=torch.rand(size=(10, 12288))):
     return model
 
 
-def compute_nmi_and_pca(model, name, colors_classes, device, testloader, flatten=True, layer='conv2'):
+def compute_nmi_and_pca(model, name, colors_classes, device, data_loader, flatten=True, layer='conv2', n_clusters=None):
+    """
+    Utility method for computing K-Means and PCA.
+    Parameters:
+                model (AbstractModel or AbstractDecModel): model which should be used to encode the data
+                name (str): name of the model. The name must either contain RotNet, CIFAR or AE. If it's a (I)DEC version,
+                it must contain DEC in the name. If it is SimCLR with resnet18 base, it must contain r18 in the name.
+                colors_classes (dictionary): dict containing mapping from names to labels, e.g. {1: 'airplane', ...}.
+                device (str): device to be used for data encoding
+                data_loader (DataLoader): dataloader containing data to be used for K-Means and PCA
+                flatten (Boolean): if flattening of output is needed; only used for RotNet models
+                layer (str): output of which layer should be used for encoding. only used for RotNet models
+                n_clusters (int): number of clusters to be used for K-Means. By default is set to the number of unique
+                labels in the dataset
+            Returns:
+                labels: ground-truth labels
+                kmeans: KMeans object containing results of the performed clustering
+                nmi: NMI between ground-truth and kmeans labels
+                reduced_data: data reduced with PCA (number of components = 2)
+                lable_classes: array containing ground_truth labels, but in text format instead of int. To be used
+                when plotting different clusters
+    """
     model.eval()
     if 'pretrained' in name:
         decoder = model
@@ -133,21 +107,24 @@ def compute_nmi_and_pca(model, name, colors_classes, device, testloader, flatten
         decoder = model.model
 
     if 'RotNet' in name:
-        embedded_data, labels = decoder.forward_batch(testloader, device=device, flatten=flatten, layer=layer)
+        embedded_data, labels = decoder.forward_batch(data_loader, device=device, flatten=flatten, layer=layer)
     else:
-        embedded_data, labels = decoder.forward_batch(testloader, device)
+        embedded_data, labels = decoder.forward_batch(data_loader, device)
     lable_classes = [colors_classes[l] for l in labels]
 
-    n_clusters = len(set(labels))
-    print(n_clusters)
+    if n_clusters is None:
+        n_clusters = len(set(labels))
+    print(f'Starting K-Means with {n_clusters} clusters...')
     kmeans = KMeans(n_clusters=n_clusters)
     kmeans.fit(embedded_data)
     nmi = normalized_mutual_info_score(labels, kmeans.labels_)
 
+    print('Starting PCA with 2 components...')
     pca = PCA(n_components=2)
     reduced_data = pca.fit_transform(embedded_data)
 
     return labels, kmeans, nmi, reduced_data, lable_classes
+
 
 def compute_nmi_and_pca_for_plot(model, name, colors_classes, device, testloader, flatten=True, layer='conv2'):
     if 'pretrained' in name:
@@ -177,7 +154,19 @@ def compute_nmi_and_pca_for_plot(model, name, colors_classes, device, testloader
     return labels, aug_labels, kmeans, nmi, reduced_data, lable_classes
 
 
-def plot_pca_and_nmi(name, axes, nmi, pca, lable_classes):
+def plot_pca_and_nmi(name, nmi, pca, lable_classes, axes=None):
+    """
+    Create plot of the reduced data and add model's name and NMI to the title
+    Parameters:
+                name (str): models' name
+                nmi (float): NMI to be added to the title
+                pca (list): data reduced with pca
+                lable_classes (list): structure containing labels of each entry in the reduced_data. Needed to color
+                the points belonging to the same class into different colors
+                axes (matplotlib axes): axes where plot should be located. If none, create own plot with size (8,8)
+    """
+    if axes is None:
+        f, axes = plt.subplots(figsize=(8, 8))
     axes.set_title(f'{name} Kmeans NMI: {nmi:.4f}')
     axes.get_xaxis().set_visible(False)
     axes.get_yaxis().set_visible(False)
@@ -186,6 +175,15 @@ def plot_pca_and_nmi(name, axes, nmi, pca, lable_classes):
 
 
 def plot_class_representation(pca, name, lable_classes, aug_labels):
+    """
+    Create multiple plots for each of the ground-truth classes and plot them together in a grid
+    Parameters:
+                name (str): models' name
+                pca (list): data reduced with pca
+                lable_classes (list): structure containing labels of each entry in the reduced_data. Needed to color
+                the points belonging to the same class into different colors
+                axes (matplotlib axes): axes where plot should be located. If none, create own plot with size (8,8)
+    """
     print(f'{name} class representation')
     lc = np.array(lable_classes)
     fig, axes = plt.subplots(2, 5, figsize=(20, 8))
@@ -206,7 +204,6 @@ def plot_class_representation(pca, name, lable_classes, aug_labels):
         class_labels = lc == c
         originals = aug_labels == 1
         augmented = aug_labels == 0
-        # centres = aug_labels == -1
 
         ids_original = np.where(np.logical_and(class_labels, originals))[0]
         ids_augmented = np.where(np.logical_and(class_labels, augmented))[0]
@@ -268,6 +265,7 @@ def plot_class_representation_with_centers(pca, name, lable_classes, aug_labels,
 
     plt.show()
 
+
 def plot_class_representation_rotnet(pca, name, lable_classes, aug_labels):
     print(f'{name} class representation')
     lc = np.array(lable_classes)
@@ -276,10 +274,6 @@ def plot_class_representation_rotnet(pca, name, lable_classes, aug_labels):
 
     for i, c in enumerate(set(lable_classes)):
         class_labels = lc == c
-        data_0 = aug_labels == 0
-        data_1 = aug_labels == 1
-        data_2 = aug_labels == 2
-        data_3 = aug_labels == 3
 
         ids = np.where(class_labels)[0]
         hue = aug_labels[ids]
