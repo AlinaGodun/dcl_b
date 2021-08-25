@@ -58,14 +58,6 @@ def train_model(model, batch_size, learning_rate, epochs, data, train, device, d
 
     return model
 
-
-def perform_experiments(resnet_model='resnet18', epochs=20, learning_rates = [0.5, 1.0, 1.5]):
-    for learning_rate in learning_rates:
-        model = SimCLR(resnet_model=resnet_model)
-        model.name = f'{model.name}_LR{learning_rate}_e{epochs}'
-        train_model(model, batch_size, learning_rate, epochs, train, device)
-
-
 parser = argparse.ArgumentParser(description='train_script')
 parser.add_argument('--batch_size', type=int, default=128,
                     help='batch size')
@@ -127,7 +119,7 @@ for i in range(5,10):
     model = SimCLR()
     model.name = f'{model.name}_STL10_{i}'
     print(model.name)
-    train_model(model, batch_size, learning_rate, epochs, data, train, device)
+    train_model(model, batch_size, learning_rate, epochs, stl10, train, device)
 
     # model = load_model('pretrained_SimCLR_{i}.pth', device)
     # idec_model = SimClrIDEC(model, clusterloader, device)
