@@ -39,3 +39,7 @@ class SimCLRTransforms:
         if self.with_original:
             t.insert(0, xj)
         return tuple(t)
+
+    def to_rgb(self, x):
+        x = self.to_tensor(x) if isinstance(x, np.ndarray) else x
+        return self.to_tensor(self.to_pil(x).convert('RGB'))
