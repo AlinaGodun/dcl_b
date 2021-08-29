@@ -21,6 +21,7 @@ class SimCLRSTL10(CustomCifar):
         else:
             stl10 = torchvision.datasets.STL10(train_path, download=download, split='test')
 
+        self.class_names = ['airplane', 'bird', 'car', 'cat', 'deer', 'dog', 'horse', 'monkey', 'ship', 'truck']
         self.labels = stl10.labels
         self.classes = set(stl10.labels)
         self.image_num = int(len(stl10.data) * data_percent)

@@ -12,6 +12,7 @@ class RotNetSTL10(Dataset):
         split = 'unlabeled' if train is True else 'train'
         stl10 = torchvision.datasets.STL10(train_path, download=download, split=split)
 
+        self.class_names = ['airplane', 'bird', 'car', 'cat', 'deer', 'dog', 'horse', 'monkey', 'ship', 'truck']
         self.rotation_num = 4
         self.rotation_image_num = int(len(stl10.data) * data_percent) * self.rotation_num
         self.rotation_class_image_num = int(len(stl10.data) * data_percent)
