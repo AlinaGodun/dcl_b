@@ -27,13 +27,13 @@ class SimCLRFMNIST(Dataset):
 
         for i in range(len(self.classes)):
             i_mask = targets == i
-        t_data = []
+            t_data = []
 
-        data = fm.data[i_mask][:self.class_image_num]
-        for d in data:
-            t_data.append(model_transforms[True].to_rgb(d))
+            data = fm.data[i_mask][:self.class_image_num]
+            for d in data:
+                t_data.append(model_transforms[True].to_rgb(d))
 
-        self.data[i] = torch.stack(t_data)
+            self.data[i] = torch.stack(t_data)
         # self.data[i] = fm.data[i_mask][:self.class_image_num]
 
     def __len__(self):
@@ -42,7 +42,6 @@ class SimCLRFMNIST(Dataset):
     def __getitem__(self, idx):
         class_id = idx // self.class_image_num
         img_id = idx - class_id * self.class_image_num
-
         return self.transforms(self.data[class_id][img_id]), class_id
 
     def get_class(self, idx):

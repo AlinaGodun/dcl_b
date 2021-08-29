@@ -16,6 +16,8 @@ class SimCLRTransforms:
                 SimCLR transformation object
         """
         self.with_original = with_original
+        self.to_tensor = torchvision.transforms.ToTensor()
+        self.to_pil = torchvision.transforms.ToPILImage()
         self.train_transform = torchvision.transforms.Compose([
              torchvision.transforms.RandomResizedCrop(32),
              torchvision.transforms.RandomHorizontalFlip(p=0.2),

@@ -80,7 +80,7 @@ class SimCLR(AbstractModel):
         mapped_feats = self.projection_head(feats)
         return feats, mapped_feats
 
-    def forward_batch(self, data_loader, device, flatten=None):
+    def forward_batch(self, data_loader, device, flatten=None, with_aug=False):
         """
         Forward data provided by the data_loader batchwise
 
@@ -102,10 +102,17 @@ class SimCLR(AbstractModel):
             batch_data = batch.to(device)
             feats, _ = self(batch_data)
             embeddings.append(feats.detach().cpu())
-            labels = labels + batch_labels[0].tolist()
-            aug_labels = aug_labels + batch_labels[1].tolist()
 
-        return torch.cat(embeddings, dim=0).numpy(), np.array(labels), np.array(aug_labels)
+            if with_aug:
+                labels = labels + batch_labels[0].tolist()
+                aug_labels = aug_labels + batch_labels[1].tolist()
+            else:
+                labels = labels + batch_labels.tolist()
+
+        if with_aug:
+            return torch.cat(embeddings, dim=0).numpy(), np.array(labels), np.array(aug_labels)
+        else:
+            return torch.cat(embeddings, dim=0).numpy(), np.array(labels)
 
     def fit(self, data_loader, epochs, start_lr, device, model_path, weight_decay=1e-6, gf=False, write_stats=True):
         """
