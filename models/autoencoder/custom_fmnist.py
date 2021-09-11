@@ -28,16 +28,23 @@ class AEFMNIST(Dataset):
         self.image_num = int(len(fmnist.data) * data_percent)
         self.class_image_num = int(self.image_num / len(self.classes))
         self.data = {}
-        data = fmnist.data
 
-        data = np.transpose(data, (0, 3, 1, 2))
+        self.to_tensor = torchvision.transforms.ToTensor()
+        self.to_pil = torchvision.transforms.ToPILImage()
 
         for i in range(len(self.classes)):
             i_mask = targets == i
+            t_data = []
+
             if start == 'beginning':
-                self.data[i] = torch.from_numpy(data[i_mask][:self.class_image_num]).float()
+                data = fmnist.data.data[i_mask][:self.class_image_num]
             else:
-                self.data[i] = torch.from_numpy(data[i_mask][:-self.class_image_num]).float()
+                data = fmnist.data.data[i_mask][-self.class_image_num:]
+
+            for d in data:
+                t_data.append(self.to_tensor(self.to_pil(d).convert('RGB')))
+
+            self.data[i] = torch.stack(t_data)
 
     def __len__(self):
         """

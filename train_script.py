@@ -160,7 +160,7 @@ valloader = torch.utils.data.DataLoader(validation_data,
 
 for i in range(10):
     ae = ConvAE(n_channels=3, n_classes=3, embd_sz=64)
-    ae.name = f'{ae.name}_STL10_{i}'
+    ae.name = f'{ae.name}_FMNIST_{i}'
     # state_dict = torch.load(f'trained_models/pretrained_AE_{i}.pth', map_location=device)
     # ae.load_state_dict(state_dict)
     # ae = ae.to(device)

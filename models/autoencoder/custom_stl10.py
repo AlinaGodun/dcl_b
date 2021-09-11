@@ -32,7 +32,7 @@ class AESTL10(Dataset):
         if start == 'beginning':
             data = stl10.data[:self.image_num, :]
         else:
-            data = stl10.data[:-self.image_num, :]
+            data = stl10.data[-self.class_image_num:, :]
         data = resize(torch.from_numpy(data)).numpy()
 
         self.data = np.transpose(data, (0, 2, 3, 1))

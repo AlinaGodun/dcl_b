@@ -45,7 +45,7 @@ class AECIFAR(Dataset):
             if start == 'beginning':
                 self.data[i] = torch.from_numpy(data[i_mask][:self.class_image_num]).float()
             else:
-                self.data[i] = torch.from_numpy(data[i_mask][:-self.class_image_num]).float()
+                self.data[i] = torch.from_numpy(data[i_mask][-self.class_image_num:]).float()
             # self.data[i] = normalize(self.data[i])
 
             # images = data[i_mask][:self.class_image_num]

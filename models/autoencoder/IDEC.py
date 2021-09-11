@@ -62,7 +62,7 @@ class IDEC(AbstractDecModel):
         for epoch in range(epochs):
             self.train()
             for batch in data_loader:
-                batch_data = batch[0].to(device)
+                batch_data = batch.to(device)
                 embedded = self.model.encode(batch_data)
                 reconstruction = self.model.decode(embedded)
 
