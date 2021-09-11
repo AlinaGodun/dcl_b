@@ -10,6 +10,9 @@ import sklearn
 # util functions
 from sklearn.cluster import KMeans
 
+from models.autoencoder.IDEC import IDEC
+from models.autoencoder.conv_ae import ConvAE
+from models.autoencoder.custom_stl10 import AESTL10
 from models.simclr.custom_stl10 import SimCLRSTL10
 from util.util import *
 
@@ -51,6 +54,32 @@ def train_model(model, batch_size, learning_rate, epochs, data, train, device, d
         else:
             model = model.fit(data_loader=trainloader, epochs=epochs, start_lr=learning_rate, device=device,
                               model_path=pretrained_model_path, degree_of_space_distortion=degree_of_space_distortion)
+        torch.save(model.state_dict(), pretrained_model_path)
+    else:
+        state_dict = torch.load(pretrained_model_path, map_location=device)
+        model.load_state_dict(state_dict)
+
+    return model
+
+def train_model2(model, batch_size, learning_rate, epochs, data, train, device, validation_dl, degree_of_space_distortion=None):
+    print(f"Training {model.name} started...")
+    model.to(device)
+
+    # paths to save/load models from
+    base_path = "trained_models"
+    pretrained_model_name = f'{model.name}.pth'
+    pretrained_model_path = os.path.join(base_path, pretrained_model_name)
+
+    # training
+    if train:
+        trainloader = data
+
+        if degree_of_space_distortion is None:
+            model = model.fit(data_loader=trainloader, epochs=epochs, start_lr=learning_rate, device=device,
+                              model_path=pretrained_model_path, eval_data_loader=validation_dl)
+        else:
+            model = model.fit(data_loader=trainloader, epochs=epochs, start_lr=learning_rate, device=device,
+                              model_path=pretrained_model_path, degree_of_space_distortion=degree_of_space_distortion, eval_data_loader=validation_dl)
         torch.save(model.state_dict(), pretrained_model_path)
     else:
         state_dict = torch.load(pretrained_model_path, map_location=device)
@@ -109,17 +138,41 @@ train = True
 # print(f'base: {name}, epochs: {epochs}')
 # train_model(model, batch_size, learning_rate, epochs, traindata, train, device)
 
-stl10 = SimCLRSTL10(download=False, data_percent=1.0, with_original=False)
-dataloader = torch.utils.data.DataLoader(stl10,
+# stl10 = SimCLRSTL10(download=False, data_percent=1.0, with_original=False)
+# dataloader = torch.utils.data.DataLoader(stl10,
+#                                          batch_size=128,
+#                                          shuffle=True,
+#                                          drop_last=True)
+
+data = AESTL10('./data', data_percent=0.9)
+validation_data = AESTL10('./data', data_percent=0.1, start='ending')
+
+dataloader = torch.utils.data.DataLoader(data,
                                          batch_size=128,
                                          shuffle=True,
                                          drop_last=True)
 
-for i in range(5,10):
-    model = SimCLR()
-    model.name = f'{model.name}_STL10_{i}'
-    print(model.name)
-    train_model(model, batch_size, learning_rate, epochs, stl10, train, device)
+valloader = torch.utils.data.DataLoader(validation_data,
+                                         batch_size=128,
+                                         shuffle=True,
+                                         drop_last=True)
+
+for i in range(10):
+    ae = ConvAE(n_channels=3, n_classes=3, embd_sz=64)
+    ae.name = f'{ae.name}_STL10_{i}'
+    # state_dict = torch.load(f'trained_models/pretrained_AE_{i}.pth', map_location=device)
+    # ae.load_state_dict(state_dict)
+    # ae = ae.to(device)
+
+    # idec = IDEC(ae, dataloader, device)
+    # idec.name = {f'{idec.name}_{i}'}
+    train_model(ae, 128, learning_rate, 300, dataloader, True, device, valloader)
+
+# for i in range(5,10):
+    # model = SimCLR()
+    # model.name = f'{model.name}_STL10_{i}'
+    # print(model.name)
+    # train_model(model, batch_size, learning_rate, epochs, stl10, train, device)
 
     # model = load_model('pretrained_SimCLR_{i}.pth', device)
     # idec_model = SimClrIDEC(model, clusterloader, device)
