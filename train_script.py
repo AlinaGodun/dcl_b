@@ -12,6 +12,7 @@ from sklearn.cluster import KMeans
 
 from models.autoencoder.IDEC import IDEC
 from models.autoencoder.conv_ae import ConvAE
+from models.autoencoder.custom_fmnist import AEFMNIST
 from models.autoencoder.custom_stl10 import AESTL10
 from models.simclr.custom_stl10 import SimCLRSTL10
 from util.util import *
@@ -144,8 +145,8 @@ train = True
 #                                          shuffle=True,
 #                                          drop_last=True)
 
-data = AESTL10('./data', data_percent=0.9)
-validation_data = AESTL10('./data', data_percent=0.1, start='ending')
+data = AEFMNIST('./data', data_percent=0.9)
+validation_data = AEFMNIST('./data', data_percent=0.1, start='ending')
 
 dataloader = torch.utils.data.DataLoader(data,
                                          batch_size=128,
@@ -166,7 +167,7 @@ for i in range(10):
 
     # idec = IDEC(ae, dataloader, device)
     # idec.name = {f'{idec.name}_{i}'}
-    train_model(ae, 128, learning_rate, 300, dataloader, True, device, valloader)
+    train_model2(ae, 128, learning_rate, 300, dataloader, True, device, valloader)
 
 # for i in range(5,10):
     # model = SimCLR()
