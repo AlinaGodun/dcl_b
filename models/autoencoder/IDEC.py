@@ -60,6 +60,7 @@ class IDEC(AbstractDecModel):
         i = 0
 
         for epoch in range(epochs):
+            self.train()
             for batch in data_loader:
                 batch_data = batch[0].to(device)
                 embedded = self.model.encode(batch_data)
@@ -76,8 +77,14 @@ class IDEC(AbstractDecModel):
 
                 train_losses.append(loss.item())
 
+            train_loss = np.average(train_losses)
+            valid_loss = np.average(valid_losses)
+            train_losses = []
+            valid_losses = []
+
             if eval_data_loader is not None:
                 with torch.no_grad():
+                    self.eval()
                     for x, labels in eval_data_loader:
                         x = x.to(device)
                         embedded = self.model.encode(x)
@@ -89,11 +96,6 @@ class IDEC(AbstractDecModel):
 
                         valid_losses.append(loss.item())
 
-            train_loss = np.average(train_losses)
-            valid_loss = np.average(valid_losses)
-            train_losses = []
-            valid_losses = []
-
             if epoch % 5 == 0:
                 print(f"{self.name}: Epoch {epoch + 1}/{epochs} - Iteration {i} - Train loss:{train_loss:.4f}",
                       f"Validation loss:{valid_loss:.4f}, LR: {optimizer.param_groups[0]['lr']}")
@@ -101,9 +103,10 @@ class IDEC(AbstractDecModel):
                     self.eval()
                     torch.save(self.state_dict(), model_path)
 
-            early_stopping(valid_loss, self)
+            if eval_data_loader is not None:
+                early_stopping(valid_loss, self)
 
-            if early_stopping.early_stop:
-                break
+                if early_stopping.early_stop:
+                    break
 
         return self

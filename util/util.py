@@ -174,7 +174,7 @@ def plot_pca_and_nmi(name, nmi, pca, lable_classes, axes=None):
     sns.scatterplot(ax=axes, x=pca[:,0], y=pca[:,1], hue=lable_classes, s=7, palette='viridis')
 
 
-def plot_class_representation(pca, name, lable_classes, aug_labels):
+def plot_class_representation(pca, name, lable_classes, aug_labels=None):
     """
     Create multiple plots for each of the ground-truth classes and plot them together in a grid
     Parameters:

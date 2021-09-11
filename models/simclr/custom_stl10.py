@@ -35,13 +35,17 @@ class SimCLRSTL10(Dataset):
         }
         resize = torchvision.transforms.Resize(32)
 
-        stl10 = torchvision.datasets.STL10(train_path, download=download, split='unlabeled')
+        if train:
+            stl10 = torchvision.datasets.STL10(train_path, download=download, split='unlabeled')
+        else:
+            stl10 = torchvision.datasets.STL10(train_path, download=download, split='test')
 
+        self.class_names = ['airplane', 'bird', 'car', 'cat', 'deer', 'dog', 'horse', 'monkey', 'ship', 'truck']
+        self.labels = stl10.labels
         self.classes = set(stl10.labels)
         self.image_num = int(len(stl10.data) * data_percent)
         self.class_image_num = int(self.image_num / len(self.classes))
         self.transforms = model_transforms[transforms]
-        self.data = {}
 
         data = stl10.data[:self.image_num, :]
         data = resize(torch.from_numpy(data)).numpy()
@@ -68,7 +72,7 @@ class SimCLRSTL10(Dataset):
                 Image at index idx. If train or transforms is set to True, returns two augmented views of the image.
                 If with_original is set to True, returns original image together with augmented views.
         """
-        return self.transforms(self.data[idx]), -1
+        return self.transforms(self.data[idx]), self.labels[idx]
 
     def get_class(self, idx):
         """
@@ -80,5 +84,4 @@ class SimCLRSTL10(Dataset):
             Returns:
                 class of the image at this index
         """
-        # since this dataset is unlabeled, always return -1
-        return -1
+        return self.labels[idx]

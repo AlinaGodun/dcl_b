@@ -96,6 +96,7 @@ class ConvAE(AbstractModel):
         return d
 
     def forward_batch(self, data_loader, device, flatten=None):
+        self.eval()
         """
         Forward data provided by the data_loader batchwise
 
