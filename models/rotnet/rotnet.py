@@ -6,6 +6,9 @@ import torch
 import numpy as np
 
 from models.abstract_model.models import AbstractModel
+from models.rotnet.custom_cifar import RotNetCIFAR
+from models.rotnet.custom_fmnist import RotNetFashionMNIST
+from models.rotnet.custom_stl10 import RotNetSTL10
 from util.gradflow_check import plot_grad_flow
 
 
@@ -29,6 +32,12 @@ class RotNet(AbstractModel):
                 RotNet model
         """
         super().__init__(name='RotNet', loss=nn.CrossEntropyLoss())
+
+        self.datasets = {
+            'cifar': RotNetCIFAR,
+            'stl10': RotNetSTL10,
+            'fmnist': RotNetFashionMNIST
+        }
 
         n_channels = {1: 192, 2: 160, 3: 96}
 

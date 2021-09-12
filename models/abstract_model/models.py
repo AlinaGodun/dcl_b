@@ -26,8 +26,26 @@ class AbstractModel(nn.Module):
         pass
 
     @abstractmethod
-    def fit(self, data_loader, epochs, start_lr, device, model_path, weight_decay, gf=False, write_stats=True):
+    def fit(self, data_loader, epochs, start_lr, device, model_path, weight_decay, gf=False, write_stats=True,
+            eval_data_loader=None):
         pass
+
+    def get_dataset(self, dataset_name, train_path='./data', download=False, data_percent=1.0, train=True,
+                    eval_dataset=False):
+        if dataset_name not in self.datasets.keys:
+            raise KeyError(f'Provided dataset: {dataset_name} is not available. '
+                           f'Available datasets: {self.datasets.keys}')
+
+        dataset_params = {
+            'train_path': train_path,
+            'download': download,
+            'data_percent': data_percent,
+            'train': train
+        }
+        if eval_dataset:
+            dataset_params['start'] = 'ending'
+
+        return self.datasets[dataset_name](**dataset_params)
 
     def init_statistics(self):
         return init_statistics(self.name)
@@ -68,8 +86,14 @@ class AbstractDecModel(nn.Module):
         return self.model.forward_batch(data_loader, device, flatten)
 
     @abstractmethod
-    def fit(self, data_loader, epochs, start_lr, device, model_path, weight_decay, gf=False, write_stats=False):
+    def fit(self, data_loader, epochs, start_lr, device, model_path, weight_decay, gf=False, write_stats=False,
+            eval_data_loader=None):
         pass
+
+    def get_dataset(self, dataset_name, train_path='./data', download=False, data_percent=1.0, train=True,
+                    eval_dataset=False):
+        self.model.get_dataset(dataset_name, train_path=train_path, download=download, data_percent=data_percent,
+                               train=train, eval_dataset=eval_dataset)
 
     def init_statistics(self):
         return init_statistics(self.name)

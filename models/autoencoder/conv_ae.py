@@ -4,6 +4,9 @@ import torch.nn as nn
 import numpy as np
 
 from models.abstract_model.models import AbstractModel
+from models.autoencoder.custom_cifar import AECIFAR
+from models.autoencoder.custom_fmnist import AEFMNIST
+from models.autoencoder.custom_stl10 import AESTL10
 from util.pytorchtools import EarlyStopping
 
 
@@ -20,6 +23,12 @@ class ConvAE(AbstractModel):
                 Autoencoder model
         """
         super().__init__(name='AE', loss=nn.MSELoss())
+        self.datasets = {
+            'cifar': AECIFAR,
+            'stl10': AESTL10,
+            'fmnist': AEFMNIST
+        }
+
         self.n_channels = n_channels
         self.n_classes = n_classes
 
@@ -192,6 +201,23 @@ class ConvAE(AbstractModel):
                     break
 
         return self
+
+    def get_dataset(self, dataset_name, train_path='./data', download=False, data_percent=1.0, train=True,
+                    eval_dataset=False):
+        if dataset_name not in self.datasets.keys:
+            raise KeyError(f'Provided dataset: {dataset_name} is not available. '
+                           f'Available datasets: {self.datasets.keys}')
+
+        dataset_params = {
+            'train_path': train_path,
+            'download': download,
+            'data_percent': data_percent,
+            'train': train
+        }
+        if eval_dataset:
+            dataset_params['start'] = 'ending'
+
+        return self.datasets[dataset_name](**dataset_params)
 
 
 class ConvBn(nn.Module):

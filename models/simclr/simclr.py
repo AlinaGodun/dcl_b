@@ -2,9 +2,16 @@ import torch
 import torchvision
 import numpy as np
 from torch import nn
+
+from models.simclr.custom_cifar import SimCLRCIFAR
+from models.simclr.custom_stl10 import SimCLRSTL10
 from models.simclr.loss import SimCLRLoss
 from models.abstract_model.models import AbstractModel
 from util.gradflow_check import plot_grad_flow
+
+
+class SimCLRFashionMNIST(object):
+    pass
 
 
 class SimCLR(AbstractModel):
@@ -27,6 +34,12 @@ class SimCLR(AbstractModel):
                 KeyError: If resnet_model value is not in the list of available options
         """
         super().__init__(name='SimCLR', loss=SimCLRLoss(tau))
+
+        self.datasets = {
+            'cifar': SimCLRCIFAR,
+            'stl10': SimCLRSTL10,
+            'fmnist': SimCLRFashionMNIST
+        }
 
         self.resnet_models = {
             'resnet18': torchvision.models.resnet18,

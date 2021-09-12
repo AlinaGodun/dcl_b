@@ -29,16 +29,8 @@ class AECIFAR(Dataset):
         self.class_image_num = int(self.image_num / len(self.classes))
         self.data = {}
         data = cifar.data
-        # data = data/255
 
         data = np.transpose(data, (0, 3, 1, 2))
-
-        # self.mean = data.mean(axis=(0, 1, 2)) / 255
-        # self.std = data.std(axis=(0, 1, 2)) / 255
-        # normalize = torchvision.transforms.Normalize(self.mean, self.std)
-        # t = torchvision.transforms.Compose([torchvision.transforms.ToTensor(),
-        #                                     torchvision.transforms.Normalize(self.mean, self.std)])
-        # t = torchvision.transforms.ToTensor()
 
         for i in range(len(self.classes)):
             i_mask = targets == i
@@ -46,15 +38,6 @@ class AECIFAR(Dataset):
                 self.data[i] = torch.from_numpy(data[i_mask][:self.class_image_num]).float()
             else:
                 self.data[i] = torch.from_numpy(data[i_mask][-self.class_image_num:]).float()
-            # self.data[i] = normalize(self.data[i])
-
-            # images = data[i_mask][:self.class_image_num]
-            # t_images = []
-            #
-            # for img in images:
-            #
-            # self.data[i] = torch.stack(t_images)
-            #     t_images.append(t(img))
 
     def __len__(self):
         """

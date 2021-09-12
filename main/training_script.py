@@ -29,19 +29,21 @@ def train_model(model, batch_size, learning_rate, epochs, data, device, eval_dat
                                                   shuffle=True,
                                                   drop_last=True)
 
-    if degree_of_space_distortion is None:
-        model = model.fit(data_loader=train_loader, epochs=epochs, start_lr=learning_rate, device=device,
-                          model_path=model_path)
-    else:
-        if eval_data is None:
-            model = model.fit(data_loader=train_loader, epochs=epochs, start_lr=learning_rate, device=device,
-                              model_path=model_path,
-                              degree_of_space_distortion=degree_of_space_distortion)
-        else:
-            model = model.fit(data_loader=train_loader, epochs=epochs, start_lr=learning_rate, device=device,
-                              model_path=model_path,
-                              degree_of_space_distortion=degree_of_space_distortion,
-                              eval_data_loader=eval_loader)
+    train_params = {
+        'data_loader': train_loader,
+        'epochs': epochs,
+        'start_lr': learning_rate,
+        'device': device,
+        'model_path': model_path
+    }
+
+    if degree_of_space_distortion:
+        train_params['degree_of_space_distortion'] = degree_of_space_distortion
+
+    if eval_data:
+        train_params['eval_data_loader'] = eval_loader
+
+    model = model.fit(**train_params)
 
     model.eval()
     torch.save(model.state_dict(), model_path)
@@ -69,6 +71,40 @@ def get_model(args, device):
         load_model(args.load_path, device)
     return model
 
+def perform_action(model, args, device):
+    if args.parser.train:
+        train(model, args, device)
+
+    if args.parser.evaluate:
+        evaluate(model, args, device)
+
+def train(model, args, device):
+    train_params = {
+        'model': model,
+        'batch_size': args.parser.batch_size,
+        'learning_rate': args.parser.lr,
+        'epochs': args.parser.epochs,
+        'device:': device
+    }
+    eval_models = ['cifar', 'cifar-idec', 'rotnet-idec']
+    model_name = args.parser.model_type
+
+    for dataset in args.parser.datasets:
+        # TODO: add args for dataset
+        train_params['data'] = model.get_dataset(dataset_name=dataset)
+
+        if model_name in eval_models:
+            # TODO: add args for dataset
+            train_params['eval_data'] = model.get_dataset(eval_dataset=True)
+
+        if 'idec' in model_name and args.parser.degree_of_space_distortion:
+            train_params['degree_of_space_distortion'] = args.parser.degree_of_space_distortion
+
+        model = train_model(**train_params)
+    return
+
+def evaluate(model, args, device):
+    return
 
 print("Versions:")
 print(f"torch: {torch.__version__}")
@@ -83,5 +119,7 @@ param_handler = ParameterHandler()
 param_handler.check_params()
 args = param_handler.args
 
+model = get_model(args, device)
+perform_action(model, args, device)
 
 
