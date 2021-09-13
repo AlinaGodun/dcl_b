@@ -21,7 +21,7 @@ class SimCLR(AbstractModel):
         Implementation of A Simple Framework for Contrastive Learning of Visual Representations (SimCLR):
 
             Parameters:
-                output_dim (int): dimension of the output which should be provided by the model.
+                output_dim (int): dimension of the output which should be provided by the model's projection head.
                 resnet_model (str): which resnet model should be used as a base; available options are: cifar_resnet18
                 (CIFAR-adapted ResNet-18), cifar_resnet50 (CIFAR-adapted ResNet-50), resnet18 (normal ResNet-18,
                 standard pytorch implementation),resnet18 (normal ResNet-50, standard pytorch implementation).

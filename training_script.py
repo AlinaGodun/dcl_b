@@ -3,6 +3,7 @@ import os
 import sklearn
 
 from main.param_handler import ParameterHandler
+from util import util
 from util.util import *
 
 def train_model(model, batch_size, learning_rate, epochs, data, device, eval_data=None,
@@ -49,7 +50,7 @@ def train_model(model, batch_size, learning_rate, epochs, data, device, eval_dat
     return model
 
 
-def create_model(model_name, device):
+def create_model(model_name, param_handler, device):
     print('_______________________________')
     available_models = {
         'rotnet': RotNet,
@@ -62,11 +63,14 @@ def create_model(model_name, device):
 
     if model_name not in available_models.keys():
         raise KeyError(f'No model {model_name} is available. Available models are: rotnet, simclr, cifar.')
+
     if args.train_type == 'idec':
         model_name = f'{model_name}-idec'
     # todo: add model's args
-    print(f'Creating model: {model_name}')
-    model = available_models[model_name]()
+    model_params = param_handler.get_model_params(model_name)
+    print(f'Creating model: {model_name} with params: {model_params}')
+
+    model = available_models[model_name](**model_params)
     model = model.to(device)
 
     return model
@@ -74,7 +78,7 @@ def create_model(model_name, device):
 def load_model(args, device):
     print('_______________________________')
     print(f'Loading existing model at path: {args.load_path}')
-    load_model(args.load_path, device)
+    util.load_model(args.load_path, device)
     return model
 
 def perform_action(model, param_handler, device):
@@ -151,8 +155,8 @@ args = param_handler.args
 if args.load_path:
     model = load_model(args, device)
 else:
-    for model in args.models:
-        model = create_model(model, device)
+    for model_name in args.models:
+        model = create_model(model_name, param_handler, device)
         perform_action(model, param_handler, device)
 
 

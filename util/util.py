@@ -39,7 +39,7 @@ def detect_device():
     return device
 
 
-def load_model(name, device, cluster_centres=None):
+def load_model(name, device, cluster_centres=None, model_params={}):
     """
         Utility method for downloading the models by name. The model should be located in trained_models
         folder.

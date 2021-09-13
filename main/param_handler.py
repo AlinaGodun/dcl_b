@@ -50,7 +50,9 @@ class ParameterHandler:
                                  help='Percent of data to be used for training/testing.')
 
         # SimCLR params
-        self.parser.add_argument('--simclr_resnet', type=str, default='resnet18',
+        self.parser.add_argument('--simclr_output_dim', type=int, default=128,
+                                 help='Number of the output of the SimCLR\'s projection head')
+        self.parser.add_argument('--simclr_resnet', type=str, default='resnet50',
                                  help='default model used for SimCLR base')
         self.parser.add_argument('--simclr_tau', type=float, default=0.5,
                                  help='tau to be be used for SimCLR training')
@@ -121,3 +123,23 @@ class ParameterHandler:
             'data_percent': self.args.data_percent
         }
         return dataset_params
+
+    def get_model_params(self, model_name):
+        model_params = {}
+
+        if model_name == 'simclr':
+            model_params['output_dim'] = self.args.simclr_output_dim
+            model_params['resnet_model'] = self.args.simclr_resnet
+            model_params['tau'] = self.args.simclr_tau
+
+        if model_name == 'convae':
+            model_params['n_channels'] = self.args.convae_n_channels
+            model_params['n_classes'] = self.args.convae_n_classes
+            model_params['embd_sz'] = self.args.convae_embd_sz
+
+        if model_name == 'rotnet':
+            model_params['num_classes'] = self.args.rotnet_num_classes
+            model_params['in_channels'] = self.args.rotnet_in_channels
+            model_params['num_blocks'] = self.args.rotnet_num_blocks
+
+        return model_params
