@@ -8,6 +8,8 @@ from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.metrics import normalized_mutual_info_score
 
+from models.autoencoder.IDEC import IDEC
+from models.autoencoder.conv_ae import ConvAE
 from models.simclr.IDEC import IDEC as SimClrIDEC
 from models.rotnet.DEC import DEC as RotNetIDEC
 from models.rotnet.rotnet import RotNet
@@ -71,6 +73,11 @@ def load_model(name, device, cluster_centres=None):
             if cluster_centres is None:
                 cluster_centres = torch.rand(size=(10, 2048))
             model = SimClrIDEC(cluster_centres=cluster_centres)
+    elif 'AE' in name:
+        if 'DEC' not in name:
+            model = ConvAE(n_channels=3, n_classes=3, embd_sz=64)
+        else:
+            model = IDEC()
 
     state_dict = torch.load(f'trained_models/{name}', map_location=device)
     model.load_state_dict(state_dict)

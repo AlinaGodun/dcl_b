@@ -30,13 +30,11 @@ class RotNetTransforms:
             Returns:
                 (list of rotated xs, list of rotation labels)
         """
-        if self.grey:
-            rotated_xs = [r(x, self.grey) for _, r in self.rotate.items()]
-            rotated_xs = [np.array(self.to_pil(x).convert('RGB')) for x in rotated_xs]
-        else:
-            rotated_xs = [r(x) for _, r in self.rotate.items()]
-
+        rotated_xs = [r(x) for _, r in self.rotate.items()]
         rotated_labels = [label for label, _ in self.rotate.items()]
+
+        if self.grey:
+            rotated_xs = [np.array(self.to_pil(x).convert('RGB')) for x in rotated_xs]
 
         return rotated_xs, rotated_labels
 

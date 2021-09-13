@@ -7,8 +7,8 @@ from util.pytorchtools import EarlyStopping
 
 
 class IDEC(AbstractDecModel):
-    def __init__(self, model=ConvAE(n_channels=3, n_classes=3), train_loader=None, device='cpu', n_clusters=None,
-                 dec_type='IDEC', cluster_centres=torch.rand(size=(10, 128))):
+    def __init__(self, model=ConvAE(n_channels=3, n_classes=3, embd_sz=64), train_loader=None, device='cpu', n_clusters=None,
+                 dec_type='IDEC', cluster_centres=torch.rand(size=(10, 64))):
         """
         DEC with ConvAE base.
 

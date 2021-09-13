@@ -25,6 +25,7 @@ class AESTL10(Dataset):
         stl10 = torchvision.datasets.STL10(train_path, download=download, split=split)
 
         self.classes = stl10.classes
+        self.labels = stl10.labels
         self.image_num = int(len(stl10.data) * data_percent)
         self.class_image_num = int(self.image_num / len(self.classes))
         self.data = {}
@@ -33,9 +34,9 @@ class AESTL10(Dataset):
             data = stl10.data[:self.image_num, :]
         else:
             data = stl10.data[-self.class_image_num:, :]
-        data = resize(torch.from_numpy(data)).numpy()
+        self.data = resize(torch.from_numpy(data).float()).numpy()
 
-        self.data = np.transpose(data, (0, 2, 3, 1))
+        # self.data = np.transpose(data, (0, 2, 3, 1))
 
     def __len__(self):
         """

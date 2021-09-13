@@ -32,7 +32,7 @@ class AbstractModel(nn.Module):
 
     def get_dataset(self, dataset_name, train_path='./data', download=False, data_percent=1.0, train=True,
                     eval_dataset=False):
-        if dataset_name not in self.datasets.keys:
+        if dataset_name not in self.datasets.keys():
             raise KeyError(f'Provided dataset: {dataset_name} is not available. '
                            f'Available datasets: {self.datasets.keys}')
 

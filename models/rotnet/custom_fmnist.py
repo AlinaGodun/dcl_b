@@ -49,8 +49,6 @@ class RotNetFashionMNIST(Dataset):
 
         self.rotated_labels = np.array(self.rotated_labels)
 
-        print(rotated_data_list[0].shape)
-        print(type(rotated_data_list[0]))
         rotated_data_list = np.array(rotated_data_list)
 
         for i in range(len(self.transforms.rotate.keys())):
