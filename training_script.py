@@ -89,7 +89,7 @@ def perform_action(model, param_handler, device):
         evaluate(model, param_handler, device)
 
 def train(model, param_handler, device):
-    eval_models = ['cifar', 'cifar-idec', 'rotnet-idec']
+    eval_models = ['IDEC_RotNet', 'AE', 'IDEC_AE']
     model_name = model.name
 
     args = param_handler.args
@@ -105,7 +105,7 @@ def train(model, param_handler, device):
         train_params['data'] = model.get_dataset(dataset_name=dataset, **dataset_params)
 
         if model_name in eval_models:
-            train_params['eval_data'] = model.get_dataset(eval_dataset=True, **dataset_params)
+            train_params['eval_data'] = model.get_dataset(dataset_name=dataset, eval_dataset=True, **dataset_params)
 
         model = train_model(model=model, **train_params)
     return model
