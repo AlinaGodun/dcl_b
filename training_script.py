@@ -49,7 +49,7 @@ def train_model(model, batch_size, learning_rate, epochs, data, device, eval_dat
     return model
 
 
-def create_models(args, device):
+def create_model(model_name, device):
     print('_______________________________')
     available_models = {
         'rotnet': RotNet,
@@ -60,16 +60,16 @@ def create_models(args, device):
         'convae-idec': IDEC
     }
 
-    models = []
+    if model_name not in available_models.keys():
+        raise KeyError(f'No model {model_name} is available. Available models are: rotnet, simclr, cifar.')
+    if args.train_type == 'idec':
+        model_name = f'{model_name}-idec'
+    # todo: add model's args
+    print(f'Creating model: {model_name}')
+    model = available_models[model_name]()
+    model = model.to(device)
 
-    for model_name in args.models:
-        if args.train_type == 'idec':
-            model_name = f'{model_name}-idec'
-        # todo: add model's args
-        print(f'Creating model: {model_name}')
-        models.append(available_models[model_name]())
-
-    return models
+    return model
 
 def load_model(args, device):
     print('_______________________________')
@@ -77,37 +77,24 @@ def load_model(args, device):
     load_model(args.load_path, device)
     return model
 
-def perform_action(model, args, device):
+def perform_action(model, param_handler, device):
     if args.train:
         print('_______________________________')
-        print('Started model training...')
-        model = train(model, args, device)
+        print(f'Started {model.name} training...')
+        model = train(model, param_handler, device)
 
     if args.evaluate:
         print('_______________________________')
-        print('Started model evaluation...')
-        evaluate(model, args, device)
+        print(f'Started {model.name} evaluation...')
+        evaluate(model, param_handler, device)
 
-def train(model, args, device):
+def train(model, param_handler, device):
     eval_models = ['cifar', 'cifar-idec', 'rotnet-idec']
     model_name = model.name
 
-    train_params = {
-        'batch_size': args.batch_size,
-        'learning_rate': args.lr,
-        'epochs': args.epochs,
-        'device': device,
-        'out_path': args.output_path
-    }
-
-    dataset_params = {
-        'train_path': args.data_path,
-        'download': args.download_data,
-        'data_percent': args.data_percent
-    }
-
-    if 'DEC' in model_name and args.degree_of_space_distortion:
-        train_params['degree_of_space_distortion'] = args.degree_of_space_distortion
+    args = param_handler.args
+    train_params = param_handler.get_train_params(device, model_name)
+    dataset_params = param_handler.get_dataset_params()
 
     print(f'Training parameters: {train_params}')
     print(f'Dataset parameters: {dataset_params}')
@@ -123,26 +110,29 @@ def train(model, args, device):
         model = train_model(model=model, **train_params)
     return model
 
-def evaluate(model, args, device):
+def evaluate(model, param_handler, device):
     evaluation_params = {
         'model:': model,
         'name:': model.name,
         'device': device
     }
-    if 'RotNet' in model.name:
-        evaluation_params['flatten'] = True
-        evaluation_params['layer'] = 'conv2'
 
-    if args.n_clusters:
-        evaluation_params['n_clusters'] = args.n_clusters
+    dataset_params = param_handler.get_dataset_params()
 
-    for dataset in args.datasets:
-        # TODO: add args for dataset
-        d = model.get_dataset(dataset_name=dataset, train=False)
-        evaluation_params['data_loader'] = torch.utils.data.DataLoader(d, batch_size=args.batch_size,
-                                                  shuffle=True, drop_last=True)
-        evaluation_params['colors_classes'] = {i: color_class for i, color_class in zip(range(len(d.classes)), d.classes)}
-        labels, kmeans, nmi, reduced_data, lable_classes = compute_nmi_and_pca(**evaluation_params)
+    # if 'RotNet' in model.name:
+    #     evaluation_params['flatten'] = True
+    #     evaluation_params['layer'] = 'conv2'
+    #
+    # if args.n_clusters:
+    #     evaluation_params['n_clusters'] = args.n_clusters
+    #
+    # for dataset in args.datasets:
+    #     # TODO: add args for dataset
+    #     d = model.get_dataset(dataset_name=dataset, train=False, **dataset_params)
+    #     evaluation_params['data_loader'] = torch.utils.data.DataLoader(d, batch_size=args.batch_size,
+    #                                               shuffle=True, drop_last=True)
+    #     evaluation_params['colors_classes'] = {i: color_class for i, color_class in zip(range(len(d.classes)), d.classes)}
+    #     labels, kmeans, nmi, reduced_data, lable_classes = compute_nmi_and_pca(**evaluation_params)
 
 
 print("Versions:")
@@ -161,8 +151,8 @@ args = param_handler.args
 if args.load_path:
     model = load_model(args, device)
 else:
-    models = create_models(args, device)
-    for model in models:
-        perform_action(model, args, device)
+    for model in args.models:
+        model = create_model(model, device)
+        perform_action(model, param_handler, device)
 
 

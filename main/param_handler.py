@@ -50,10 +50,27 @@ class ParameterHandler:
                                  help='Percent of data to be used for training/testing.')
 
         # SimCLR params
-        self.parser.add_argument('--resnet', type=str, default='resnet18',
+        self.parser.add_argument('--simclr_resnet', type=str, default='resnet18',
                                  help='default model used for SimCLR base')
-        self.parser.add_argument('--tau', type=float, default=0.5,
+        self.parser.add_argument('--simclr_tau', type=float, default=0.5,
                                  help='tau to be be used for SimCLR training')
+
+        # RotNet params
+        self.parser.add_argument('--rotnet_num_classes', type=int, default=4,
+                                         help='Number of classes the images should be classified into by RotNet')
+        self.parser.add_argument('--rotnet_in_channels', type=int, default=3,
+                                         help='Number of input channels for RotNet')
+        self.parser.add_argument('--rotnet_num_blocks', type=int, default=3,
+                                         help='Number of convolution blocks for RotNet')
+
+        # ConvAE params
+        self.parser.add_argument('--convae_n_channels', type=int, default=3,
+                                         help='Number of input channels for ConvAE')
+        self.parser.add_argument('--convae_n_classes', type=int, default=3,
+                                         help='Number of classes for ConvAE. Must correspond to number of image '
+                                              'channels')
+        self.parser.add_argument('--convae_embd_sz', type=int, default=64,
+                                         help='Size of the embedding space of ConvAE')
 
         # KMeans params
         self.parser.add_argument('--n_clusters', type=int, default=10,
@@ -63,7 +80,7 @@ class ParameterHandler:
 
         self.args.datasets = self.args.datasets.split(',')
         self.args.models = self.args.models.split(',')
-        
+
         self.args.train = 'True' == self.args.train
         self.args.evaluate = 'True' == self.args.evaluate
         self.args.download_data = 'True' == self.args.download_data
@@ -82,3 +99,25 @@ class ParameterHandler:
             if not self.args.train:
                 raise ValueError('Cannot perform kmeans or pca, no model provided at --load_path'
                                  'and no model can be trained because --train is set to False.')
+
+    def get_train_params(self, device, model_name):
+        train_params = {
+            'batch_size': self.args.batch_size,
+            'learning_rate': self.args.lr,
+            'epochs': self.args.epochs,
+            'device': device,
+            'out_path': self.args.output_path
+        }
+
+        if 'DEC' in model_name and self.args.degree_of_space_distortion:
+            train_params['degree_of_space_distortion'] = self.args.degree_of_space_distortion
+
+        return train_params
+
+    def get_dataset_params(self):
+        dataset_params = {
+            'train_path': self.args.data_path,
+            'download': self.args.download_data,
+            'data_percent': self.args.data_percent
+        }
+        return dataset_params

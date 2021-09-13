@@ -6,7 +6,7 @@ from models.simclr.transforms import SimCLRTransforms
 
 
 class SimCLRSTL10(Dataset):
-    def __init__(self, train_path='./data', download=False, data_percent=1.0, train=True, with_original=True,
+    def __init__(self, train_path='./data', download=False, data_percent=1.0, train=True, with_original=False,
                  transforms=None):
         """
         Custom wrapper for STL10 dataset.

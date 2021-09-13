@@ -11,13 +11,13 @@ from util.pytorchtools import EarlyStopping
 
 
 class ConvAE(AbstractModel):
-    def __init__(self, n_channels, n_classes, embd_sz=128):
+    def __init__(self, n_channels=3, n_classes=3, embd_sz=64):
         """
         Implementation of a convolution autoencoder
 
             Parameters:
                 n_channels (int): number of input channels
-                n_classes (int): number of output channels; for images, must correspond to the number of channels
+                n_classes (int): number of classes; for images, must correspond to the number of channels
                 embd_sz (int): size of the embedding (encoder's output and decoder's input)
             Returns:
                 Autoencoder model
@@ -201,23 +201,6 @@ class ConvAE(AbstractModel):
                     break
 
         return self
-
-    def get_dataset(self, dataset_name, train_path='./data', download=False, data_percent=1.0, train=True,
-                    eval_dataset=False):
-        if dataset_name not in self.datasets.keys:
-            raise KeyError(f'Provided dataset: {dataset_name} is not available. '
-                           f'Available datasets: {self.datasets.keys}')
-
-        dataset_params = {
-            'train_path': train_path,
-            'download': download,
-            'data_percent': data_percent,
-            'train': train
-        }
-        if eval_dataset:
-            dataset_params['start'] = 'ending'
-
-        return self.datasets[dataset_name](**dataset_params)
 
 
 class ConvBn(nn.Module):

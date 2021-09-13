@@ -18,14 +18,14 @@ class RotNet(AbstractModel):
         Implementation of Unsupervised Representation Learning by PredictingImage Rotations (RotNet):
 
             Parameters:
-                num_classes (int): number of classes the images should be classified into; default values corresponds to the
-                number of rotations; corresponds to the dimension of the output of the last classifier layer
+                num_classes (int): number of classes the images should be classified into; default values corresponds to
+                the number of rotations; corresponds to the dimension of the output of the last classifier layer
                 in_channels (int): number of input channels
                 num_blocks (int): number of ConvNet blocks; recommended value is from 3 to 5
                 num_clusters (int): number of clusters the images should be clustered into; corresponds to the dimension
                 of the output of the features layer which is added if with_features is enabled; was used to try
                 to cluster the data before classifying the rotation to use this output for IDEC training,
-                but unsuccessfull
+                but unsuccessful
                 with_features (Boolean): if True, include features layer; see num_clusters param for more info
 
             Returns:

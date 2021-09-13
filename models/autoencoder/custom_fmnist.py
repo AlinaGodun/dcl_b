@@ -24,6 +24,8 @@ class AEFMNIST(Dataset):
 
         targets = np.array(fmnist.targets)
 
+        self.resize = torchvision.transforms.Resize(32)
+
         self.classes = fmnist.classes
         self.image_num = int(len(fmnist.data) * data_percent)
         self.class_image_num = int(self.image_num / len(self.classes))
@@ -44,7 +46,7 @@ class AEFMNIST(Dataset):
             for d in data:
                 t_data.append(self.to_tensor(self.to_pil(d).convert('RGB')))
 
-            self.data[i] = torch.stack(t_data)
+            self.data[i] = self.resize(torch.stack(t_data)).float()
 
     def __len__(self):
         """

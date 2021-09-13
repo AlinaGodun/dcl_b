@@ -4,6 +4,7 @@ import numpy as np
 from torch import nn
 
 from models.simclr.custom_cifar import SimCLRCIFAR
+from models.simclr.custom_fmnist import SimCLRFMNIST
 from models.simclr.custom_stl10 import SimCLRSTL10
 from models.simclr.loss import SimCLRLoss
 from models.abstract_model.models import AbstractModel
@@ -38,7 +39,7 @@ class SimCLR(AbstractModel):
         self.datasets = {
             'cifar': SimCLRCIFAR,
             'stl10': SimCLRSTL10,
-            'fmnist': SimCLRFashionMNIST
+            'fmnist': SimCLRFMNIST
         }
 
         self.resnet_models = {
