@@ -4,6 +4,7 @@ import sklearn
 
 from main.param_handler import ParameterHandler
 from util import util
+from util.cluster_accuracy import cluster_accuracy
 from util.util import *
 
 def train_model(model, batch_size, learning_rate, epochs, data, device, eval_data=None,
@@ -50,23 +51,17 @@ def train_model(model, batch_size, learning_rate, epochs, data, device, eval_dat
     return model
 
 
-def create_model(model_name, param_handler, device):
+def create_base_model(model_name, param_handler, device):
     print('_______________________________')
     available_models = {
         'rotnet': RotNet,
         'simclr': SimCLR,
-        'convae': ConvAE,
-        'rotnet-idec': RotNetIDEC,
-        'simclr-idec': SimClrIDEC,
-        'convae-idec': IDEC
+        'convae': ConvAE
     }
 
     if model_name not in available_models.keys():
         raise KeyError(f'No model {model_name} is available. Available models are: rotnet, simclr, cifar.')
 
-    if args.train_type == 'idec':
-        model_name = f'{model_name}-idec'
-    # todo: add model's args
     model_params = param_handler.get_model_params(model_name)
     print(f'Creating model: {model_name} with params: {model_params}')
 
@@ -75,68 +70,127 @@ def create_model(model_name, param_handler, device):
 
     return model
 
+def create_idec_model(model, model_name, param_handler, device, dataset_name):
+    print('_______________________________')
+    available_models = {
+        'rotnet-idec': RotNetIDEC,
+        'simclr-idec': SimClrIDEC,
+        'convae-idec': IDEC
+    }
+
+    if 'idec' not in model_name:
+        model_name = f'{model_name}-idec'
+
+    if model_name not in available_models.keys():
+        raise KeyError(f'No model {model_name} is available. Available models are: rotnet, simclr, cifar.')
+
+    #
+    dataset_params = param_handler.get_dataset_params('simclr')
+    dataset_params['transforms'] = False
+
+    cluster_data = model.get_dataset(dataset_name, dataset_params)
+    cluster_loader = torch.utils.data.DataLoader(cluster_data,
+                                               batch_size=param_handler.args.batch_size,
+                                               shuffle=True,
+                                               drop_last=True)
+
+    print(f'Creating model: {model_name} with base model: {model.name}')
+    model = available_models[model_name](model=model, train_loader=cluster_loader)
+    model = model.to(device)
+
+    return model
+
 def load_model(args, device):
     print('_______________________________')
     print(f'Loading existing model at path: {args.load_path}')
-    util.load_model(args.load_path, device)
+    model = util.load_model(args.load_path, device)
     return model
 
-def perform_action(model, param_handler, device):
-    if args.train:
+def perform_action(model, model_name, param_handler, device, dataset):
+    if param_handler.args.train_type == 'pretrain':
+        result_model = perform_model_action(model, model_name, param_handler, device, dataset)
+
+    if param_handler.args.train_type == 'idec':
+        idec = create_idec_model(model, model_name, param_handler, device, dataset)
+        result_model = perform_model_action(idec, model_name, param_handler, device, dataset)
+
+    if param_handler.args.train_type == 'full':
+        result_model = perform_model_action(model, model_name, param_handler, device, dataset)
+        idec = create_idec_model(result_model, model_name, param_handler, device, dataset)
+
+        result_model = perform_model_action(idec, model_name, param_handler, device, dataset)
+
+    return result_model
+
+def perform_model_action(model, model_name, param_handler, device, dataset):
+    if param_handler.args.train:
         print('_______________________________')
         print(f'Started {model.name} training...')
-        model = train(model, param_handler, device)
+        model = train(model, param_handler, device, dataset)
 
-    if args.evaluate:
+    if param_handler.args.evaluate:
         print('_______________________________')
         print(f'Started {model.name} evaluation...')
-        evaluate(model, param_handler, device)
+        evaluate(model, model_name, param_handler, device, dataset)
 
-def train(model, param_handler, device):
+    return model
+
+def train(model, param_handler, device, dataset):
     eval_models = ['IDEC_RotNet', 'AE', 'IDEC_AE']
     model_name = model.name
 
-    args = param_handler.args
     train_params = param_handler.get_train_params(device, model_name)
-    dataset_params = param_handler.get_dataset_params()
+    dataset_params = param_handler.get_dataset_params(model_name)
 
     print(f'Training parameters: {train_params}')
     print(f'Dataset parameters: {dataset_params}')
 
-    for dataset in args.datasets:
-        print('_______________________________')
-        print(f'Training dataset: {dataset}')
-        train_params['data'] = model.get_dataset(dataset_name=dataset, **dataset_params)
+    print('_______________________________')
+    print(f'Training dataset: {dataset}')
+    train_params['data'] = model.get_dataset(dataset, dataset_params)
 
-        if model_name in eval_models:
-            train_params['eval_data'] = model.get_dataset(dataset_name=dataset, eval_dataset=True, **dataset_params)
+    if model_name in eval_models:
+        dataset_params['eval_dataset'] = True
+        train_params['eval_data'] = model.get_dataset(dataset, dataset_params)
 
-        model = train_model(model=model, **train_params)
+    if dataset.upper() not in model.name:
+        model.name = f'{model.name}_{dataset.upper()}'
+    model = train_model(model=model, **train_params)
+
     return model
 
-def evaluate(model, param_handler, device):
+def evaluate(model, model_name, param_handler, device, dataset):
     evaluation_params = {
-        'model:': model,
-        'name:': model.name,
+        'model': model,
+        'name': model.name,
         'device': device
     }
 
-    dataset_params = param_handler.get_dataset_params()
+    dataset_params = param_handler.get_dataset_params(model_name)
+    dataset_params['train'] = False
 
-    # if 'RotNet' in model.name:
-    #     evaluation_params['flatten'] = True
-    #     evaluation_params['layer'] = 'conv2'
-    #
-    # if args.n_clusters:
-    #     evaluation_params['n_clusters'] = args.n_clusters
-    #
-    # for dataset in args.datasets:
-    #     # TODO: add args for dataset
-    #     d = model.get_dataset(dataset_name=dataset, train=False, **dataset_params)
-    #     evaluation_params['data_loader'] = torch.utils.data.DataLoader(d, batch_size=args.batch_size,
-    #                                               shuffle=True, drop_last=True)
-    #     evaluation_params['colors_classes'] = {i: color_class for i, color_class in zip(range(len(d.classes)), d.classes)}
-    #     labels, kmeans, nmi, reduced_data, lable_classes = compute_nmi_and_pca(**evaluation_params)
+    if 'RotNet' in model.name:
+        evaluation_params['flatten'] = True
+        evaluation_params['layer'] = 'conv2'
+
+    if args.n_clusters:
+        evaluation_params['n_clusters'] = args.n_clusters
+
+    d = model.get_dataset(dataset, dataset_params)
+    evaluation_params['data_loader'] = torch.utils.data.DataLoader(d, batch_size=args.batch_size,
+                                              shuffle=True, drop_last=True)
+    evaluation_params['colors_classes'] = {i: color_class for i, color_class in zip(range(len(d.classes)), d.classes)}
+    labels, kmeans, nmi, reduced_data, lable_classes = compute_nmi_and_pca(**evaluation_params)
+    ca = cluster_accuracy(labels, kmeans.labels_)
+    print(f'Kmeans NMI: {nmi:.3f}')
+    print(f'Cluster Accuracy: {ca:.3f}')
+
+    out_path = os.path.join(param_handler.args.output_path, model.name)
+    if not os.path.exists(out_path):
+        os.mkdir(out_path)
+    print(f'Saving evaluation data and visualizations at: {out_path}')
+    plot_pca_and_nmi(model.name, nmi, reduced_data, lable_classes, out_path=out_path)
+    plot_class_representation(reduced_data, model.name, lable_classes)
 
 
 print("Versions:")
@@ -152,11 +206,14 @@ param_handler = ParameterHandler()
 param_handler.check_params()
 args = param_handler.args
 
-if args.load_path:
-    model = load_model(args, device)
-else:
-    for model_name in args.models:
-        model = create_model(model_name, param_handler, device)
-        perform_action(model, param_handler, device)
+for dataset in args.datasets:
+    if args.load_path:
+        model = load_model(args, device)
+        model_name = args.models[0]
+        model = perform_action(model, model_name, param_handler, device, dataset)
+    else:
+        for model_name in args.models:
+            model = create_base_model(model_name, param_handler, device)
+            model = perform_action(model, model_name, param_handler, device, dataset)
 
 

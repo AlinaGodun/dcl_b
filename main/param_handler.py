@@ -88,7 +88,7 @@ class ParameterHandler:
         self.args.download_data = 'True' == self.args.download_data
 
     def check_params(self):
-        action_present = self.args.train or self.args.kmeans or self.args.pca
+        action_present = self.args.train or self.args.evaluate
 
         if not action_present:
             raise ValueError('No action to be done. At least one of these parameters must be true:'
@@ -101,6 +101,14 @@ class ParameterHandler:
             if not self.args.train:
                 raise ValueError('Cannot perform kmeans or pca, no model provided at --load_path'
                                  'and no model can be trained because --train is set to False.')
+
+        if self.args.train_type == 'idec':
+            if len(self.args.models) > 1:
+                raise ValueError('Too many model types provided in --models. If you want to train idec'
+                                 'from the loaded model, only one model type should be specified')
+            if len(self.args.datasets) > 1:
+                raise ValueError('Too many datasets provided in --datasets. If you want to train idec'
+                                 'from the loaded model, only one dataset should be specified')
 
     def get_train_params(self, device, model_name):
         train_params = {
@@ -116,12 +124,15 @@ class ParameterHandler:
 
         return train_params
 
-    def get_dataset_params(self):
+    def get_dataset_params(self, model_name):
         dataset_params = {
             'train_path': self.args.data_path,
             'download': self.args.download_data,
             'data_percent': self.args.data_percent
         }
+
+        if 'SimCLR' in model_name and 'IDEC' in model_name:
+            dataset_params['with_original'] = True
         return dataset_params
 
     def get_model_params(self, model_name):

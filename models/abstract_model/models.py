@@ -30,20 +30,14 @@ class AbstractModel(nn.Module):
             eval_data_loader=None):
         pass
 
-    def get_dataset(self, dataset_name, train_path='./data', download=False, data_percent=1.0, train=True,
-                    eval_dataset=False):
+    def get_dataset(self, dataset_name, dataset_params):
         if dataset_name not in self.datasets.keys():
             raise KeyError(f'Provided dataset: {dataset_name} is not available. '
                            f'Available datasets: {self.datasets.keys}')
 
-        dataset_params = {
-            'train_path': train_path,
-            'download': download,
-            'data_percent': data_percent,
-            'train': train
-        }
-        if eval_dataset:
+        if 'eval_dataset' in dataset_params.keys():
             dataset_params['start'] = 'ending'
+            dataset_params.pop('eval_dataset')
 
         return self.datasets[dataset_name](**dataset_params)
 
@@ -79,6 +73,17 @@ class AbstractDecModel(nn.Module):
 
         self.cluster_module = DEC(cluster_centres).to(device)
 
+    def reset_cluster_module(self, cluster_data_loader, device, n_clusters=None):
+        embedded_data, labels = self.forward_batch(cluster_data_loader, device=device)
+        n_clusters = len(set(labels)) if n_clusters is None else n_clusters
+        kmeans = MiniBatchKMeans(n_clusters=n_clusters) if len(embedded_data) > 200000 else KMeans(n_clusters=n_clusters)
+        kmeans.fit(embedded_data)
+        cluster_centres = kmeans.cluster_centers_
+        self.start_nmi = normalized_mutual_info_score(labels, kmeans.labels_)
+
+        self.cluster_module = DEC(cluster_centres).to(device)
+
+
     def forward(self, x):
         return self.model(x)
 
@@ -90,10 +95,8 @@ class AbstractDecModel(nn.Module):
             eval_data_loader=None):
         pass
 
-    def get_dataset(self, dataset_name, train_path='./data', download=False, data_percent=1.0, train=True,
-                    eval_dataset=False):
-        self.model.get_dataset(dataset_name, train_path=train_path, download=download, data_percent=data_percent,
-                               train=train, eval_dataset=eval_dataset)
+    def get_dataset(self, dataset_name, dataset_params):
+        return self.model.get_dataset(dataset_name, dataset_params)
 
     def init_statistics(self):
         return init_statistics(self.name)

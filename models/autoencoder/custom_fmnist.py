@@ -5,7 +5,7 @@ from torch.utils.data import Dataset
 
 
 class AEFMNIST(Dataset):
-    def __init__(self, train_path='./data', download=False, data_percent=1.0, train=True, start='beginning'):
+    def __init__(self, train_path='./data', download=False, data_percent=1.0, train=True, start='beginning', transforms=False):
         """
         Custom wrapper for FMNIST dataset.
 

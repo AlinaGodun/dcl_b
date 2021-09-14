@@ -6,7 +6,7 @@ from models.rotnet.transforms import RotNetTransforms
 
 
 class RotNetSTL10(Dataset):
-    def __init__(self, train_path='./data', download=False, data_percent=1.0, train=True):
+    def __init__(self, train_path='./data', download=False, data_percent=1.0, train=True, transforms=False):
         """
         Custom wrapper for STL10 dataset.
 

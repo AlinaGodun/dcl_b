@@ -5,7 +5,7 @@ from torch.utils.data import Dataset
 
 
 class AESTL10(Dataset):
-    def __init__(self, train_path='./data', download=False, data_percent=1.0, train=True, start='beginning'):
+    def __init__(self, train_path='./data', download=False, data_percent=1.0, train=True, start='beginning',  transforms=False):
         """
         Custom wrapper for STL10 dataset.
 
@@ -25,15 +25,16 @@ class AESTL10(Dataset):
         stl10 = torchvision.datasets.STL10(train_path, download=download, split=split)
 
         self.classes = stl10.classes
-        self.labels = stl10.labels
         self.image_num = int(len(stl10.data) * data_percent)
         self.class_image_num = int(self.image_num / len(self.classes))
         self.data = {}
 
         if start == 'beginning':
             data = stl10.data[:self.image_num, :]
+            self.labels = stl10.labels[:self.image_num]
         else:
-            data = stl10.data[-self.class_image_num:, :]
+            data = stl10.data[-self.image_num:, :]
+            self.labels = stl10.labels[-self.image_num:]
         self.data = resize(torch.from_numpy(data).float()).numpy()
 
         # self.data = np.transpose(data, (0, 2, 3, 1))

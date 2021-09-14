@@ -5,7 +5,7 @@ from models.rotnet.transforms import RotNetTransforms
 
 
 class RotNetCIFAR(Dataset):
-    def __init__(self, train_path='./data', download=False, data_percent=1.0, train=True, start='beginning'):
+    def __init__(self, train_path='./data', download=False, data_percent=1.0, train=True, start='beginning', transforms=False):
         """
         Custom wrapper for CIFAR dataset.
 

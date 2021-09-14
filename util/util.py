@@ -1,3 +1,5 @@
+import os
+
 import torch
 import torchvision
 import numpy as np
@@ -38,7 +40,6 @@ def detect_device():
         device = torch.device('cpu')
     return device
 
-
 def load_model(name, device, cluster_centres=None, model_params={}):
     """
         Utility method for downloading the models by name. The model should be located in trained_models
@@ -53,33 +54,34 @@ def load_model(name, device, cluster_centres=None, model_params={}):
             Returns:
                 model (IDEC): trained model
     """
+    state_dict = torch.load(name, map_location=device)
+
+    if cluster_centres is None and 'DEC' in name:
+        cluster_centres = torch.rand(size=state_dict['cluster_module.centers'].shape)
+
     if 'RotNet' in name:
-        if cluster_centres is None:
-            cluster_centres = torch.rand(size=(10, 12288))
+        rotnet_params = model_params if model_params else {'num_classes': 4}
 
         if 'DEC' not in name:
-            model = RotNet(num_classes=4)
+            model = RotNet(**rotnet_params)
         else:
-            model = RotNetIDEC(model=RotNet(num_classes=4), cluster_centres=cluster_centres, device=device)
+            model = RotNetIDEC(model=RotNet(**rotnet_params), cluster_centres=cluster_centres, device=device)
     elif 'SimCLR' in name:
-        if 'r18' in name:
-            resnet_model = 'resnet18'
-        else:
-            resnet_model = 'resnet50'
+        resnet_model = 'resnet18' if 'r18' in name else 'resnet50'
+        simclr_params = model_params if model_params else {'resnet_model': resnet_model}
 
         if 'DEC' not in name:
-            model = SimCLR(resnet_model=resnet_model)
+            model = SimCLR(simclr_params)
         else:
-            if cluster_centres is None:
-                cluster_centres = torch.rand(size=(10, 2048))
-            model = SimClrIDEC(cluster_centres=cluster_centres)
+            model = SimClrIDEC(model=SimCLR(**simclr_params), cluster_centres=cluster_centres)
     elif 'AE' in name:
-        if 'DEC' not in name:
-            model = ConvAE(n_channels=3, n_classes=3, embd_sz=64)
-        else:
-            model = IDEC()
+        ae_params = model_params if model_params else {'n_channels': 3, 'n_classes': 3, 'embd_sz': 64}
 
-    state_dict = torch.load(f'trained_models/{name}', map_location=device)
+        if 'DEC' not in name:
+            model = ConvAE(**ae_params)
+        else:
+            model = IDEC(model=ConvAE(**ae_params))
+
     model.load_state_dict(state_dict)
     model.to(device)
     return model
@@ -161,7 +163,7 @@ def compute_nmi_and_pca_for_plot(model, name, colors_classes, device, testloader
     return labels, aug_labels, kmeans, nmi, reduced_data, lable_classes
 
 
-def plot_pca_and_nmi(name, nmi, pca, lable_classes, axes=None):
+def plot_pca_and_nmi(name, nmi, pca, lable_classes, axes=None, out_path=None):
     """
     Create plot of the reduced data and add model's name and NMI to the title
     Parameters:
@@ -178,10 +180,14 @@ def plot_pca_and_nmi(name, nmi, pca, lable_classes, axes=None):
     axes.get_xaxis().set_visible(False)
     axes.get_yaxis().set_visible(False)
     axes.axis('off')
-    sns.scatterplot(ax=axes, x=pca[:,0], y=pca[:,1], hue=lable_classes, s=7, palette='viridis')
+    sns.scatterplot(ax=axes, x=pca[:, 0], y=pca[:, 1], hue=lable_classes, s=7, palette='viridis')
+
+    if out_path:
+        path = os.path.join(out_path, f'{name}_pca')
+        plt.savefig(fname=path)
 
 
-def plot_class_representation(pca, name, lable_classes, aug_labels=None):
+def plot_class_representation(pca, name, lable_classes, out_path=None):
     """
     Create multiple plots for each of the ground-truth classes and plot them together in a grid
     Parameters:
@@ -196,38 +202,18 @@ def plot_class_representation(pca, name, lable_classes, aug_labels=None):
     fig, axes = plt.subplots(2, 5, figsize=(20, 8))
     axes = axes.flatten()
 
-    normal_points = pca[:-10]
-    centers_coordinates = pca[-10:]
-    tree = spatial.KDTree(normal_points)
-    nearest_ids = []
-
-    s = set(lable_classes)
-    s.remove(-1)
-
-    for i, c in enumerate(s):
-        nearest_ids.append(tree.query(centers_coordinates[i], k=5)[1])
-
-    for i, c in enumerate(s):
+    for i, c in enumerate(set(lable_classes)):
         class_labels = lc == c
-        originals = aug_labels == 1
-        augmented = aug_labels == 0
-
-        ids_original = np.where(np.logical_and(class_labels, originals))[0]
-        ids_augmented = np.where(np.logical_and(class_labels, augmented))[0]
+        ids_class = np.where(class_labels)
 
         axes[i].set(title=f'class {c}')
         axes[i].get_xaxis().set_visible(False)
         axes[i].get_yaxis().set_visible(False)
         axes[i].axis('off')
         sns.scatterplot(ax=axes[i], x=pca[:, 0], y=pca[:, 1], s=7, color='#d1dade')
-        sns.scatterplot(ax=axes[i], x=pca[ids_augmented, 0], y=pca[ids_augmented, 1], s=10, alpha=0.5)
-        sns.scatterplot(ax=axes[i], x=pca[ids_original, 0], y=pca[ids_original, 1], s=10, color='#ff802b', alpha=0.5)
 
         for k in range(10):
-            # sns.scatterplot(ax=axes[i], x=pca[nearest_ids[k], 0], y=pca[nearest_ids[k], 1], s=50, color='#000000', marker='X')
             axes[i].annotate(str(k), xy=(pca[nearest_ids[k]][0][0], pca[nearest_ids[k]][0][1]))
-        # sns.scatterplot(ax=axes[i], x=pca[centres, 0], y=pca[centres, 1], s=10, color='#000000', marker='s')
-        # sns.scatterplot(ax=axes[i], x=pca[nearest_ids, 0], y=pca[nearest_ids, 1], s=50, color='#000000', marker='X')
 
     plt.show()
 

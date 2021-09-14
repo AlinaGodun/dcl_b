@@ -5,7 +5,7 @@ from models.rotnet.transforms import RotNetTransforms
 
 
 class RotNetFashionMNIST(Dataset):
-    def __init__(self, train_path, download=False, data_percent=0.4, train=True, start='beginning'):
+    def __init__(self, train_path, download=False, data_percent=0.4, train=True, start='beginning', transforms=False):
         """
         Custom wrapper for Fashion MNIST dataset.
 

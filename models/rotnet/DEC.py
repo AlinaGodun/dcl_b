@@ -9,7 +9,7 @@ from util.gradflow_check import plot_grad_flow
 
 class DEC(AbstractDecModel):
     def __init__(self, model=RotNet(num_classes=4, num_blocks=3), train_loader=None, device='cpu', dec_type='DEC',
-                 cluster_centres=torch.rand(size=(4, 12288)), n_clusters=None):
+                 cluster_centres=None, n_clusters=None):
         """
         DEC with RotNet base.
 
@@ -23,6 +23,12 @@ class DEC(AbstractDecModel):
             Returns:
                 IDEC RotNet model
         """
+        if not cluster_centres:
+            if 'FMNIST' in model.name:
+                cluster_centres = torch.rand(size=(4, 9408))
+            else:
+                cluster_centres = torch.rand(size=(4, 12288))
+
         super().__init__(model=model, train_loader=train_loader, device=device, dec_type=dec_type,
                          cluster_centres=cluster_centres, n_clusters=n_clusters)
 
